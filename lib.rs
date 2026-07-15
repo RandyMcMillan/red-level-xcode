@@ -61,11 +61,17 @@ pub fn run() {
     {
         let start = args.start || (!args.daemon && !args.stop && !args.reset);
         if start {
-            unix_daemon::start_daemon(args.brightness, channel_levels);
+            if let Err(error) = start_daemon(args.brightness, channel_levels) {
+                eprintln!("Error: {error}");
+                std::process::exit(1);
+            }
             return;
         }
         if args.stop {
-            unix_daemon::stop_daemon();
+            if let Err(error) = stop_daemon() {
+                eprintln!("Error: {error}");
+                std::process::exit(1);
+            }
             return;
         }
     }
@@ -77,70 +83,39 @@ pub fn run() {
     }
 
     let clamped_brightness = args.brightness.clamp(1, 100);
-    let scale = if args.reset {
-        1.0
-    } else {
-        clamped_brightness as f64 / 100.0
-    };
-    let channel_scales = if args.reset {
-        [1.0; 3]
-    } else {
-        channel_levels.map(|level| scale * level as f64 / 100.0)
-    };
-
     if args.reset {
         println!("Resetting screen filter and restoring original gamma curves...");
+        if let Err(error) = reset_display() {
+            eprintln!("Error: {error}");
+            std::process::exit(1);
+        }
     } else {
         println!(
             "Applying filter -> Brightness: {}% | RGB levels: {}% {}% {}%",
             clamped_brightness, channel_levels[0], channel_levels[1], channel_levels[2]
         );
+        if let Err(error) = apply_display(args.brightness, channel_levels) {
+            eprintln!("Error: {error}");
+            std::process::exit(1);
+        }
     }
 
-    #[cfg(target_os = "windows")]
-    {
-        windows_impl::apply_filter(channel_scales);
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        macos_impl::apply_filter(channel_scales);
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        linux_impl::apply_filter(channel_scales);
-    }
-
-    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-    {
-        eprintln!(
-            "Error: This application is currently only optimized for macOS, Windows, and Linux platforms."
-        );
-        std::process::exit(1);
-    }
-
-    // If running in foreground or daemon loop on non-Windows desktop platforms
     #[cfg(target_family = "unix")]
     {
-        if !args.reset {
-            if args.daemon {
-                loop {
-                    std::thread::park();
-                }
+        if args.daemon && !args.reset {
+            loop {
+                std::thread::park();
             }
+        }
 
-            #[cfg(feature = "ctrlc")]
-            {
+        #[cfg(feature = "ctrlc")]
+        {
+            if !args.reset {
                 println!("Filter active. Press Ctrl+C to restore the display.");
 
-                // Catch termination signals to restore screen smoothly
                 let _ = ctrlc::set_handler(move || {
                     println!("\nRestoring screen defaults...");
-                    #[cfg(target_os = "macos")]
-                    macos_impl::apply_filter([1.0; 3]);
-                    #[cfg(target_os = "linux")]
-                    linux_impl::apply_filter([1.0; 3]);
+                    let _ = reset_display();
                     std::process::exit(0);
                 });
 
@@ -166,6 +141,98 @@ fn resolve_channel_levels(args: &Args) -> [u8; 3] {
         return [0, 0, 100];
     }
     [100; 3]
+}
+
+pub fn apply_display(brightness: u8, channel_levels: [u8; 3]) -> Result<(), String> {
+    let clamped_brightness = brightness.clamp(1, 100);
+    let scale = clamped_brightness as f64 / 100.0;
+    let _channel_scales = channel_levels.map(|level| scale * level as f64 / 100.0);
+
+    #[cfg(target_os = "windows")]
+    {
+        return windows_impl::apply_filter(_channel_scales);
+    }
+
+    #[cfg(any(target_os = "macos", all(target_os = "ios", target_abi = "macabi")))]
+    {
+        return macos_impl::apply_filter(_channel_scales);
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        return linux_impl::apply_filter(_channel_scales);
+    }
+
+    #[cfg(not(any(
+        target_os = "windows",
+        target_os = "macos",
+        target_os = "linux",
+        all(target_os = "ios", target_abi = "macabi")
+    )))]
+    {
+        Err(String::from(
+            "This application is currently only optimized for macOS, Windows, and Linux platforms.",
+        ))
+    }
+}
+
+pub fn reset_display() -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        return windows_impl::apply_filter([1.0; 3]);
+    }
+
+    #[cfg(any(target_os = "macos", all(target_os = "ios", target_abi = "macabi")))]
+    {
+        return macos_impl::apply_filter([1.0; 3]);
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        return linux_impl::apply_filter([1.0; 3]);
+    }
+
+    #[cfg(not(any(
+        target_os = "windows",
+        target_os = "macos",
+        target_os = "linux",
+        all(target_os = "ios", target_abi = "macabi")
+    )))]
+    {
+        Err(String::from(
+            "This application is currently only optimized for macOS, Windows, and Linux platforms.",
+        ))
+    }
+}
+
+pub fn start_daemon(brightness: u8, channel_levels: [u8; 3]) -> Result<(), String> {
+    #[cfg(target_family = "unix")]
+    {
+        return unix_daemon::start_daemon(brightness, channel_levels);
+    }
+
+    #[cfg(not(target_family = "unix"))]
+    {
+        let _ = brightness;
+        let _ = channel_levels;
+        Err(String::from(
+            "Background process management is currently available only on Unix-like operating systems (macOS/Linux).",
+        ))
+    }
+}
+
+pub fn stop_daemon() -> Result<(), String> {
+    #[cfg(target_family = "unix")]
+    {
+        return unix_daemon::stop_daemon();
+    }
+
+    #[cfg(not(target_family = "unix"))]
+    {
+        Err(String::from(
+            "Background process management is currently available only on Unix-like operating systems (macOS/Linux).",
+        ))
+    }
 }
 
 // ==========================================
@@ -230,32 +297,24 @@ mod unix_daemon {
         }
     }
 
-    fn restore_display() {
-        #[cfg(target_os = "macos")]
-        super::macos_impl::apply_filter([1.0; 3]);
-        #[cfg(target_os = "linux")]
-        super::linux_impl::apply_filter([1.0; 3]);
+    fn restore_display() -> Result<(), String> {
+        super::reset_display()
     }
 
-    pub fn start_daemon(brightness: u8, channel_levels: [u8; 3]) {
+    pub fn start_daemon(brightness: u8, channel_levels: [u8; 3]) -> Result<(), String> {
         if let Some(pid) = read_running_pid() {
             println!("Stopping existing red-level process {pid}...");
-            if let Err(error) = stop_process(pid) {
-                eprintln!("Error: Failed to stop existing red-level process: {error}");
-                std::process::exit(1);
-            }
-            if let Err(error) = remove_pid_file() {
-                eprintln!("Error: Failed to remove the existing PID file: {error}");
-                std::process::exit(1);
-            }
-            restore_display();
+            stop_process(pid)
+                .map_err(|error| format!("Failed to stop existing red-level process: {error}"))?;
+            remove_pid_file()
+                .map_err(|error| format!("Failed to remove the existing PID file: {error}"))?;
+            restore_display()?;
         }
 
         let executable = match std::env::current_exe() {
             Ok(path) => path,
             Err(error) => {
-                eprintln!("Error: Failed to locate red-level: {error}");
-                std::process::exit(1);
+                return Err(format!("Failed to locate red-level: {error}"));
             }
         };
 
@@ -282,8 +341,9 @@ mod unix_daemon {
         let child = match command.spawn() {
             Ok(child) => child,
             Err(error) => {
-                eprintln!("Error: Failed to start red-level background daemon: {error}");
-                std::process::exit(1);
+                return Err(format!(
+                    "Failed to start red-level background daemon: {error}"
+                ));
             }
         };
 
@@ -291,33 +351,30 @@ mod unix_daemon {
             unsafe {
                 kill(child.id() as i32, SIGTERM);
             }
-            eprintln!("Error: Failed to save the red-level process ID: {error}");
-            std::process::exit(1);
+            return Err(format!("Failed to save the red-level process ID: {error}"));
         }
 
         println!(
             "red-level daemon started successfully with process ID {}.",
             child.id()
         );
+        Ok(())
     }
 
-    pub fn stop_daemon() {
+    pub fn stop_daemon() -> Result<(), String> {
         let Some(pid) = read_running_pid() else {
-            eprintln!("Error: red-level is not running in the background.");
-            std::process::exit(1);
+            return Err(String::from("red-level is not running in the background."));
         };
 
-        if let Err(error) = stop_process(pid) {
-            eprintln!("Error: Failed to stop red-level: {error}");
-            std::process::exit(1);
-        }
+        stop_process(pid).map_err(|error| format!("Failed to stop red-level: {error}"))?;
 
-        restore_display();
+        restore_display()?;
 
         if let Err(error) = remove_pid_file() {
             eprintln!("Warning: Failed to remove the red-level PID lockfile: {error}");
         }
         println!("red-level daemon stopped; the display has been restored.");
+        Ok(())
     }
 }
 
@@ -330,11 +387,12 @@ mod windows_impl {
     use windows::Win32::Graphics::Gdi::GetDC;
     use windows::Win32::UI::ColorSystem::SetDeviceGammaRamp;
 
-    pub fn apply_filter(channel_scales: [f64; 3]) {
+    pub fn apply_filter(channel_scales: [f64; 3]) -> Result<(), String> {
         let hdc = unsafe { GetDC(None) };
         if hdc.is_invalid() {
-            eprintln!("Error: Failed to acquire display device context (HDC).");
-            return;
+            let error = String::from("Failed to acquire display device context (HDC).");
+            eprintln!("Error: {error}");
+            return Err(error);
         }
 
         let mut ramp = [0u16; 768];
@@ -350,10 +408,13 @@ mod windows_impl {
         let result = unsafe { SetDeviceGammaRamp(hdc, ramp.as_ptr() as *const c_void) };
         if result.as_bool() {
             println!("System display filter applied successfully.");
+            Ok(())
         } else {
-            eprintln!(
-                "Error: SetDeviceGammaRamp failed. Native HDR or administrative limits may apply."
+            let error = String::from(
+                "SetDeviceGammaRamp failed. Native HDR or administrative limits may apply.",
             );
+            eprintln!("Error: {error}");
+            Err(error)
         }
     }
 }
@@ -361,7 +422,7 @@ mod windows_impl {
 // ==========================================
 // macOS COREGRAPHICS FFI ENGINE
 // ==========================================
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "ios", target_abi = "macabi")))]
 mod macos_impl {
     type CGDirectDisplayID = u32;
     type CGError = i32;
@@ -378,7 +439,7 @@ mod macos_impl {
         ) -> CGError;
     }
 
-    pub fn apply_filter(channel_scales: [f64; 3]) {
+    pub fn apply_filter(channel_scales: [f64; 3]) -> Result<(), String> {
         let display_id = unsafe { CGMainDisplayID() };
         const TABLE_SIZE: usize = 256;
 
@@ -406,11 +467,11 @@ mod macos_impl {
 
         if result == 0 {
             println!("System display filter applied successfully.");
+            Ok(())
         } else {
-            eprintln!(
-                "Error: CGSetDisplayTransferByTable failed with code {}.",
-                result
-            );
+            let error = format!("CGSetDisplayTransferByTable failed with code {}.", result);
+            eprintln!("Error: {error}");
+            Err(error)
         }
     }
 }
@@ -467,20 +528,22 @@ mod linux_impl {
         fn XRRSetCrtcGamma(display: *mut Display, crtc: RRCrtc, gamma: *mut XRRCrtcGamma);
     }
 
-    pub fn apply_filter(channel_scales: [f64; 3]) {
+    pub fn apply_filter(channel_scales: [f64; 3]) -> Result<(), String> {
         unsafe {
             let display = XOpenDisplay(std::ptr::null());
             if display.is_null() {
-                eprintln!("Error: Cannot open standard X11 display context connection.");
-                return;
+                let error = String::from("Cannot open standard X11 display context connection.");
+                eprintln!("Error: {error}");
+                return Err(error);
             }
 
             let root = XDefaultRootWindow(display);
             let resources = XRRGetScreenResourcesCurrent(display, root);
             if resources.is_null() {
-                eprintln!("Error: Failed to obtain screen layout resources via X11 RandR.");
+                let error = String::from("Failed to obtain screen layout resources via X11 RandR.");
+                eprintln!("Error: {error}");
                 XCloseDisplay(display);
-                return;
+                return Err(error);
             }
 
             let ncrtc = (*resources).ncrtc;
@@ -516,6 +579,7 @@ mod linux_impl {
             XRRFreeScreenResources(resources);
             XCloseDisplay(display);
             println!("System display filter applied successfully.");
+            Ok(())
         }
     }
 }
