@@ -1,5 +1,5 @@
 [package]
-name = "red_level"
+name = "red-level"
 version = "1.0.2"
 edition = "2021"
 
@@ -8,7 +8,7 @@ default = []
 ctrlc = ["dep:ctrlc"]
 
 [[bin]]
-name = "red_level"
+name = "red-level"
 path = "red_level.rs"
 
 [dependencies]

@@ -2,9 +2,9 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "red_level",
-    about = "System-level software dimming and blue/green blocking filters to prevent PWM flicker.",
-    version = "1.0.0"
+    name = "red-level",
+    about = "system-level dimming and color adjusting.",
+    version = "1.0.2"
 )]
 struct Args {
     /// Brightness level in percentage (1 to 100)
@@ -190,7 +190,7 @@ mod unix_daemon {
 
     fn pid_file() -> PathBuf {
         let uid = unsafe { getuid() };
-        std::env::temp_dir().join(format!("red_level-{uid}.pid"))
+        std::env::temp_dir().join(format!("red-level-{uid}.pid"))
     }
 
     fn read_running_pid() -> Option<i32> {
@@ -239,9 +239,9 @@ mod unix_daemon {
 
     pub fn start_daemon(brightness: u8, channel_levels: [u8; 3]) {
         if let Some(pid) = read_running_pid() {
-            println!("Stopping existing red_level process {pid}...");
+            println!("Stopping existing red-level process {pid}...");
             if let Err(error) = stop_process(pid) {
-                eprintln!("Error: Failed to stop existing red_level process: {error}");
+                eprintln!("Error: Failed to stop existing red-level process: {error}");
                 std::process::exit(1);
             }
             if let Err(error) = remove_pid_file() {
@@ -254,7 +254,7 @@ mod unix_daemon {
         let executable = match std::env::current_exe() {
             Ok(path) => path,
             Err(error) => {
-                eprintln!("Error: Failed to locate red_level: {error}");
+                eprintln!("Error: Failed to locate red-level: {error}");
                 std::process::exit(1);
             }
         };
@@ -282,7 +282,7 @@ mod unix_daemon {
         let child = match command.spawn() {
             Ok(child) => child,
             Err(error) => {
-                eprintln!("Error: Failed to start red_level background daemon: {error}");
+                eprintln!("Error: Failed to start red-level background daemon: {error}");
                 std::process::exit(1);
             }
         };
@@ -291,33 +291,33 @@ mod unix_daemon {
             unsafe {
                 kill(child.id() as i32, SIGTERM);
             }
-            eprintln!("Error: Failed to save the red_level process ID: {error}");
+            eprintln!("Error: Failed to save the red-level process ID: {error}");
             std::process::exit(1);
         }
 
         println!(
-            "red_level daemon started successfully with process ID {}.",
+            "red-level daemon started successfully with process ID {}.",
             child.id()
         );
     }
 
     pub fn stop_daemon() {
         let Some(pid) = read_running_pid() else {
-            eprintln!("Error: red_level is not running in the background.");
+            eprintln!("Error: red-level is not running in the background.");
             std::process::exit(1);
         };
 
         if let Err(error) = stop_process(pid) {
-            eprintln!("Error: Failed to stop red_level: {error}");
+            eprintln!("Error: Failed to stop red-level: {error}");
             std::process::exit(1);
         }
 
         restore_display();
 
         if let Err(error) = remove_pid_file() {
-            eprintln!("Warning: Failed to remove the red_level PID lockfile: {error}");
+            eprintln!("Warning: Failed to remove the red-level PID lockfile: {error}");
         }
-        println!("red_level daemon stopped; the display has been restored.");
+        println!("red-level daemon stopped; the display has been restored.");
     }
 }
 
