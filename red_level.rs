@@ -11,9 +11,31 @@ struct Args {
     #[arg(short, long, default_value_t = 100)]
     brightness: u8,
 
-    /// Block 100% of Blue and Green light (leaving only Red active)
-    #[arg(short, long)]
+    /// Use only the red channel
+    #[arg(short, long, conflicts_with_all = ["red", "green", "blue", "levels"])]
     red_only: bool,
+
+    /// Use only the red channel
+    #[arg(long, conflicts_with_all = ["red_only", "green", "blue", "levels"])]
+    red: bool,
+
+    /// Use only the green channel
+    #[arg(long, conflicts_with_all = ["red_only", "red", "blue", "levels"])]
+    green: bool,
+
+    /// Use only the blue channel
+    #[arg(long, conflicts_with_all = ["red_only", "red", "green", "levels"])]
+    blue: bool,
+
+    /// Set red, green, and blue channel levels as percentages
+    #[arg(
+        long,
+        value_names = ["RED", "GREEN", "BLUE"],
+        num_args = 3,
+        value_parser = clap::value_parser!(u8).range(0..=100),
+        conflicts_with_all = ["red_only", "red", "green", "blue"]
+    )]
+    levels: Option<Vec<u8>>,
 
     /// Reset screen color and brightness back to standard system defaults
     #[arg(long)]
@@ -33,11 +55,13 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    let channel_levels = resolve_channel_levels(&args);
 
     #[cfg(target_family = "unix")]
     {
-        if args.start {
-            unix_daemon::start_daemon(args.brightness, args.red_only);
+        let start = args.start || (!args.daemon && !args.stop && !args.reset);
+        if start {
+            unix_daemon::start_daemon(args.brightness, channel_levels);
             return;
         }
         if args.stop {
@@ -58,31 +82,34 @@ fn main() {
     } else {
         clamped_brightness as f64 / 100.0
     };
-    let red_only = if args.reset { false } else { args.red_only };
+    let channel_scales = if args.reset {
+        [1.0; 3]
+    } else {
+        channel_levels.map(|level| scale * level as f64 / 100.0)
+    };
 
     if args.reset {
         println!("Resetting screen filter and restoring original gamma curves...");
     } else {
         println!(
-            "Applying Filter -> Software Brightness: {}% | Red-Only mode: {}",
-            clamped_brightness,
-            if red_only { "ON" } else { "OFF" }
+            "Applying filter -> Brightness: {}% | RGB levels: {}% {}% {}%",
+            clamped_brightness, channel_levels[0], channel_levels[1], channel_levels[2]
         );
     }
 
     #[cfg(target_os = "windows")]
     {
-        windows_impl::apply_filter(scale, red_only);
+        windows_impl::apply_filter(channel_scales);
     }
 
     #[cfg(target_os = "macos")]
     {
-        macos_impl::apply_filter(scale, red_only);
+        macos_impl::apply_filter(channel_scales);
     }
 
     #[cfg(target_os = "linux")]
     {
-        linux_impl::apply_filter(scale, red_only);
+        linux_impl::apply_filter(channel_scales);
     }
 
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
@@ -111,9 +138,9 @@ fn main() {
                 let _ = ctrlc::set_handler(move || {
                     println!("\nRestoring screen defaults...");
                     #[cfg(target_os = "macos")]
-                    macos_impl::apply_filter(1.0, false);
+                    macos_impl::apply_filter([1.0; 3]);
                     #[cfg(target_os = "linux")]
-                    linux_impl::apply_filter(1.0, false);
+                    linux_impl::apply_filter([1.0; 3]);
                     std::process::exit(0);
                 });
 
@@ -123,6 +150,22 @@ fn main() {
             }
         }
     }
+}
+
+fn resolve_channel_levels(args: &Args) -> [u8; 3] {
+    if let Some(levels) = &args.levels {
+        return [levels[0], levels[1], levels[2]];
+    }
+    if args.red || args.red_only {
+        return [100, 0, 0];
+    }
+    if args.green {
+        return [0, 100, 0];
+    }
+    if args.blue {
+        return [0, 0, 100];
+    }
+    [100; 3]
 }
 
 // ==========================================
@@ -189,12 +232,12 @@ mod unix_daemon {
 
     fn restore_display() {
         #[cfg(target_os = "macos")]
-        super::macos_impl::apply_filter(1.0, false);
+        super::macos_impl::apply_filter([1.0; 3]);
         #[cfg(target_os = "linux")]
-        super::linux_impl::apply_filter(1.0, false);
+        super::linux_impl::apply_filter([1.0; 3]);
     }
 
-    pub fn start_daemon(brightness: u8, red_only: bool) {
+    pub fn start_daemon(brightness: u8, channel_levels: [u8; 3]) {
         if let Some(pid) = read_running_pid() {
             println!("Stopping existing red_level process {pid}...");
             if let Err(error) = stop_process(pid) {
@@ -221,12 +264,11 @@ mod unix_daemon {
             .arg("--daemon")
             .arg("--brightness")
             .arg(brightness.clamp(1, 100).to_string())
+            .arg("--levels")
+            .args(channel_levels.map(|level| level.to_string()))
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null());
-        if red_only {
-            command.arg("--red-only");
-        }
 
         unsafe {
             command.pre_exec(|| {
@@ -288,7 +330,7 @@ mod windows_impl {
     use windows::Win32::Graphics::Gdi::GetDC;
     use windows::Win32::UI::ColorSystem::SetDeviceGammaRamp;
 
-    pub fn apply_filter(brightness_scale: f64, red_only: bool) {
+    pub fn apply_filter(channel_scales: [f64; 3]) {
         let hdc = unsafe { GetDC(None) };
         if hdc.is_invalid() {
             eprintln!("Error: Failed to acquire display device context (HDC).");
@@ -300,15 +342,9 @@ mod windows_impl {
         for i in 0..256 {
             let val = (i as f64 / 255.0) * 65535.0;
 
-            ramp[i] = (val * brightness_scale).round() as u16;
-
-            if red_only {
-                ramp[i + 256] = 0;
-                ramp[i + 512] = 0;
-            } else {
-                ramp[i + 256] = (val * brightness_scale).round() as u16;
-                ramp[i + 512] = (val * brightness_scale).round() as u16;
-            }
+            ramp[i] = (val * channel_scales[0]).round() as u16;
+            ramp[i + 256] = (val * channel_scales[1]).round() as u16;
+            ramp[i + 512] = (val * channel_scales[2]).round() as u16;
         }
 
         let result = unsafe { SetDeviceGammaRamp(hdc, ramp.as_ptr() as *const c_void) };
@@ -342,7 +378,7 @@ mod macos_impl {
         ) -> CGError;
     }
 
-    pub fn apply_filter(brightness_scale: f64, red_only: bool) {
+    pub fn apply_filter(channel_scales: [f64; 3]) {
         let display_id = unsafe { CGMainDisplayID() };
         const TABLE_SIZE: usize = 256;
 
@@ -351,16 +387,11 @@ mod macos_impl {
         let mut blue_table = [0.0f32; TABLE_SIZE];
 
         for i in 0..TABLE_SIZE {
-            let val = (i as f32 / (TABLE_SIZE - 1) as f32) * brightness_scale as f32;
+            let val = i as f32 / (TABLE_SIZE - 1) as f32;
 
-            red_table[i] = val;
-            if red_only {
-                green_table[i] = 0.0;
-                blue_table[i] = 0.0;
-            } else {
-                green_table[i] = val;
-                blue_table[i] = val;
-            }
+            red_table[i] = val * channel_scales[0] as f32;
+            green_table[i] = val * channel_scales[1] as f32;
+            blue_table[i] = val * channel_scales[2] as f32;
         }
 
         let result = unsafe {
@@ -436,7 +467,7 @@ mod linux_impl {
         fn XRRSetCrtcGamma(display: *mut Display, crtc: RRCrtc, gamma: *mut XRRCrtcGamma);
     }
 
-    pub fn apply_filter(brightness_scale: f64, red_only: bool) {
+    pub fn apply_filter(channel_scales: [f64; 3]) {
         unsafe {
             let display = XOpenDisplay(std::ptr::null());
             if display.is_null() {
@@ -473,15 +504,9 @@ mod linux_impl {
 
                 for i in 0..gamma_size as usize {
                     let val = (i as f64 / (gamma_size - 1) as f64) * 65535.0;
-                    red_slice[i] = (val * brightness_scale).round() as u16;
-
-                    if red_only {
-                        green_slice[i] = 0;
-                        blue_slice[i] = 0;
-                    } else {
-                        green_slice[i] = (val * brightness_scale).round() as u16;
-                        blue_slice[i] = (val * brightness_scale).round() as u16;
-                    }
+                    red_slice[i] = (val * channel_scales[0]).round() as u16;
+                    green_slice[i] = (val * channel_scales[1]).round() as u16;
+                    blue_slice[i] = (val * channel_scales[2]).round() as u16;
                 }
 
                 XRRSetCrtcGamma(display, crtc, gamma);
