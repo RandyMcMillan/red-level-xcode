@@ -50,6 +50,7 @@ printf 'Installed red-level to %s\n' "$install_dir/$binary_name"
 case ":$PATH:" in
     *":$install_dir:"*) ;;
     *)
-        printf 'Add %s to PATH to run red-level from any directory.\n' "$install_dir"
+        printf 'Prepend the install directory to PATH with:\n'
+        printf '  export PATH="%s:$PATH"\n' "$install_dir"
         ;;
 esac
