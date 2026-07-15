@@ -16,7 +16,7 @@ struct ContentView: View {
     @State private var redLevel: Double = 100
     @State private var greenLevel: Double = 100
     @State private var blueLevel: Double = 100
-    @State private var preset: ChannelPreset = .full
+    @State private var preset: ChannelPreset = .custom
     @State private var statusMessage = "Ready"
 
     var body: some View {
@@ -75,6 +75,21 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("Red Level")
+        }
+        .onAppear() {
+            startDaemon()
+        }
+        .onChange(of: brightness) { _, brightness in
+            applyCurrentSettings()
+        }
+        .onChange(of: redLevel){ _, redLevel in
+            applyCurrentSettings()
+        }
+        .onChange(of: greenLevel){ _, greenLevel in
+            applyCurrentSettings()
+        }
+        .onChange(of: blueLevel){ _, blueLevel in
+            applyCurrentSettings()
         }
         .onChange(of: preset) { _, newPreset in
             applyPreset(newPreset)
