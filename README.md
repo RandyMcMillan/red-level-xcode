@@ -98,3 +98,23 @@ The channel preset flags and `--levels` are mutually exclusive.
 
 Display servers, HDR modes, color-management services, and graphics drivers
 may override software gamma changes.
+
+## Comparison to similar tools
+
+`red-level` occupies a fairly unique niche: it's the only actively maintained,
+open-source Rust crate offering true cross-platform (macOS, Windows, and
+Linux) gamma-based dimming with independent RGB channel control and
+background daemon management, embeddable as a library or used as a CLI.
+
+| Tool | macOS | Windows | Linux | License | Notes |
+| --- | --- | --- | --- | --- | --- |
+| **red-level** | ✅ (CoreGraphics) | ✅ (GDI gamma ramp) | ✅ (X11/XRandR) | Open source | Rust crate + CLI; independent RGB levels, brightness, background daemon |
+| **f.lux** | ✅ | ✅ | ✅ | Proprietary | GUI-first, closed source, not embeddable as a library |
+| **Redshift** | ❌ | ❌ | ✅ (X11) | Open source (GPL) | Classic color-temperature adjuster; Linux/BSD only |
+| **gammastep** | ❌ | ❌ | ✅ (X11 + Wayland) | Open source (GPL) | Redshift fork with Wayland support; Linux only |
+| **nightlight** (crate) | ✅ | ❌ | ❌ | Open source | Thin CLI wrapper around macOS Night Shift API |
+| **nvcli** (crate) | ❌ | ✅ | ❌ | Open source | Controls NVIDIA Control Panel display settings; Windows only |
+| **hyprlux** (crate) | ❌ | ❌ | ✅ (Hyprland) | Open source | Vibrance/night light control, Hyprland/Wayland only |
+
+Everything besides `red-level` and f.lux is locked to a single platform, and
+f.lux itself is closed source and not usable as a library dependency.
