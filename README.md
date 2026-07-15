@@ -11,10 +11,24 @@ utility starts a detached background process by default.
 Install Rust, clone the repository, and build a release binary:
 
 ```sh
-cargo build --release
+./install
 ```
 
-The binary is written to `target/release/red-level`.
+The installer builds a release binary and copies it to a user-local directory
+without `sudo`:
+
+- macOS and Linux: `$XDG_BIN_HOME` or `~/.local/bin`
+- Windows under Git Bash, MSYS2, or Cygwin:
+  `%LOCALAPPDATA%\red-level\bin`
+
+Override the destination when needed:
+
+```sh
+RED_LEVEL_INSTALL_DIR="$HOME/bin" ./install
+```
+
+To build without installing, run `cargo build --release`. The binary is
+written to `target/release/red-level` (`red-level.exe` on Windows).
 
 Linux builds require the X11 and XRandR development libraries. For example:
 

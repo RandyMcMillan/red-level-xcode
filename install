@@ -1,0 +1,55 @@
+#!/bin/sh
+
+set -eu
+
+if ! command -v cargo >/dev/null 2>&1; then
+    printf '%s\n' "error: cargo was not found; install Rust from https://rustup.rs" >&2
+    exit 1
+fi
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+platform=$(uname -s)
+
+case "$platform" in
+    Darwin | Linux)
+        binary_name=red-level
+        default_install_dir=${XDG_BIN_HOME:-"$HOME/.local/bin"}
+        ;;
+    MINGW* | MSYS* | CYGWIN*)
+        binary_name=red-level.exe
+        default_install_dir=${LOCALAPPDATA:-"$HOME/.local"}/red-level/bin
+        ;;
+    *)
+        printf 'error: unsupported platform: %s\n' "$platform" >&2
+        exit 1
+        ;;
+esac
+
+install_dir=${RED_LEVEL_INSTALL_DIR:-"$default_install_dir"}
+source_binary=$script_dir/target/release/$binary_name
+temporary_binary=$install_dir/.$binary_name.tmp.$$
+
+cleanup() {
+    rm -f -- "$temporary_binary"
+}
+trap cleanup EXIT HUP INT TERM
+
+printf '%s\n' "Building red-level..."
+(
+    cd -- "$script_dir"
+    cargo build --release
+)
+
+mkdir -p -- "$install_dir"
+cp -- "$source_binary" "$temporary_binary"
+chmod 755 "$temporary_binary"
+mv -f -- "$temporary_binary" "$install_dir/$binary_name"
+
+printf 'Installed red-level to %s\n' "$install_dir/$binary_name"
+
+case ":$PATH:" in
+    *":$install_dir:"*) ;;
+    *)
+        printf 'Add %s to PATH to run red-level from any directory.\n' "$install_dir"
+        ;;
+esac
