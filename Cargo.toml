@@ -1,6 +1,6 @@
 [package]
 name = "red_level"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 
 [[bin]]
@@ -9,6 +9,7 @@ path = "red_level.rs"
 
 [dependencies]
 clap = { version = "4.4", features = ["derive"] }
+ctrlc = "3.4"
 
 # Windows-specific system API
 [target.'cfg(windows)'.dependencies]
