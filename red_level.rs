@@ -103,20 +103,23 @@ fn main() {
                 }
             }
 
-            println!("Filter active. Press Ctrl+C to restore the display.");
-            
-            // Catch termination signals to restore screen smoothly
-            let _ = ctrlc::set_handler(move || {
-                println!("\nRestoring screen defaults...");
-                #[cfg(target_os = "macos")]
-                macos_impl::apply_filter(1.0, false);
-                #[cfg(target_os = "linux")]
-                linux_impl::apply_filter(1.0, false);
-                std::process::exit(0);
-            });
+            #[cfg(feature = "ctrlc")]
+            {
+                println!("Filter active. Press Ctrl+C to restore the display.");
 
-            loop {
-                std::thread::park();
+                // Catch termination signals to restore screen smoothly
+                let _ = ctrlc::set_handler(move || {
+                    println!("\nRestoring screen defaults...");
+                    #[cfg(target_os = "macos")]
+                    macos_impl::apply_filter(1.0, false);
+                    #[cfg(target_os = "linux")]
+                    linux_impl::apply_filter(1.0, false);
+                    std::process::exit(0);
+                });
+
+                loop {
+                    std::thread::park();
+                }
             }
         }
     }
@@ -134,7 +137,7 @@ mod unix_daemon {
 
     const SIGTERM: i32 = 15;
 
-    extern "C" {
+    unsafe extern "C" {
         fn getuid() -> u32;
         fn kill(pid: i32, signal: i32) -> i32;
         fn setsid() -> i32;
@@ -207,7 +210,10 @@ mod unix_daemon {
             std::process::exit(1);
         }
 
-        println!("red_level daemon started successfully with process ID {}.", child.id());
+        println!(
+            "red_level daemon started successfully with process ID {}.",
+            child.id()
+        );
     }
 
     pub fn stop_daemon() {
@@ -290,7 +296,7 @@ mod macos_impl {
     type CGError = i32;
 
     #[link(name = "CoreGraphics", kind = "framework")]
-    extern "C" {
+    unsafe extern "C" {
         fn CGMainDisplayID() -> CGDirectDisplayID;
         fn CGSetDisplayTransferByTable(
             display: CGDirectDisplayID,
@@ -348,7 +354,7 @@ mod macos_impl {
 // ==========================================
 #[cfg(target_os = "linux")]
 mod linux_impl {
-    use std::os::raw::{c_char, c_int, c_void, c_ulong};
+    use std::os::raw::{c_char, c_int, c_ulong, c_void};
 
     type Display = c_void;
     type Window = c_ulong;
@@ -376,15 +382,18 @@ mod linux_impl {
     }
 
     #[link(name = "X11")]
-    extern "C" {
+    unsafe extern "C" {
         fn XOpenDisplay(display_name: *const c_char) -> *mut Display;
         fn XDefaultRootWindow(display: *mut Display) -> Window;
         fn XCloseDisplay(display: *mut Display);
     }
 
     #[link(name = "Xrandr")]
-    extern "C" {
-        fn XRRGetScreenResourcesCurrent(display: *mut Display, window: Window) -> *mut XRRScreenResources;
+    unsafe extern "C" {
+        fn XRRGetScreenResourcesCurrent(
+            display: *mut Display,
+            window: Window,
+        ) -> *mut XRRScreenResources;
         fn XRRFreeScreenResources(resources: *mut XRRScreenResources);
         fn XRRGetCrtcGammaSize(display: *mut Display, crtc: RRCrtc) -> c_int;
         fn XRRAllocGamma(size: c_int) -> *mut XRRCrtcGamma;
@@ -423,7 +432,8 @@ mod linux_impl {
                 }
 
                 let red_slice = std::slice::from_raw_parts_mut((*gamma).red, gamma_size as usize);
-                let green_slice = std::slice::from_raw_parts_mut((*gamma).green, gamma_size as usize);
+                let green_slice =
+                    std::slice::from_raw_parts_mut((*gamma).green, gamma_size as usize);
                 let blue_slice = std::slice::from_raw_parts_mut((*gamma).blue, gamma_size as usize);
 
                 for i in 0..gamma_size as usize {
