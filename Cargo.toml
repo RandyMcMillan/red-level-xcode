@@ -1,5 +1,5 @@
 [package]
-name = "red-level"
+name = "red-level-xcode"
 version = "1.0.7"
 edition = "2021"
 description = "Cross-platform software display dimming and RGB channel control"
@@ -10,6 +10,7 @@ repository = "https://gist.github.com/53eb7604caa1fc14194f21ab967cae0e.git"
 readme = "README.md"
 keywords = ["brightness", "display", "gamma", "rgb", "dimming"]
 categories = ["command-line-utilities"]
+publish = false
 
 [features]
 default = []
