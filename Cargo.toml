@@ -1,0 +1,18 @@
+[package]
+name = "red_level"
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "red_level"
+path = "red_level.rs"
+
+[dependencies]
+clap = { version = "4.4", features = ["derive"] }
+
+# Windows-specific system API
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.52", features = [
+    "Win32_Graphics_Gdi",
+    "Win32_UI_ColorSystem",
+] }
