@@ -26,7 +26,6 @@ case "$platform" in
 esac
 
 install_dir=${RED_LEVEL_INSTALL_DIR:-"$default_install_dir"}
-source_binary=$script_dir/target/release/$binary_name
 temporary_binary=$install_dir/.$binary_name.tmp.$$
 
 cleanup() {
@@ -39,6 +38,23 @@ printf '%s\n' "Building red-level..."
     cd -- "$script_dir"
     cargo build --release
 )
+
+# Resolve the actual Cargo target directory instead of assuming
+# "$script_dir/target". This honors CARGO_TARGET_DIR, CARGO_BUILD_TARGET_DIR,
+# and any build.target-dir set in a discovered .cargo/config.toml (which may
+# live outside of $script_dir).
+target_dir=$(
+    cd -- "$script_dir" \
+        && cargo metadata --no-deps --format-version 1 \
+        | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p'
+)
+target_dir=${target_dir:-"$script_dir/target"}
+source_binary=$target_dir/release/$binary_name
+
+if [ ! -f "$source_binary" ]; then
+    printf 'error: built binary not found at %s\n' "$source_binary" >&2
+    exit 1
+fi
 
 mkdir -p -- "$install_dir"
 cp -- "$source_binary" "$temporary_binary"
