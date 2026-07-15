@@ -12,7 +12,7 @@ name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
 [dependencies]
-red-level = { version = "1.0.7", path = "../..", features = ["ctrlc"] }
+red-level = { package = "red-level-xcode", version = "1.0.7", path = "../..", features = ["ctrlc"] }
 uniffi = { version = "0.28.0", features = [ "cli" ] }
 
 [build-dependencies]
