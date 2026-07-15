@@ -136,6 +136,8 @@ mod unix_daemon {
     use std::process::{Command, Stdio};
 
     const SIGTERM: i32 = 15;
+    const STOP_ATTEMPTS: usize = 40;
+    const STOP_POLL_INTERVAL: std::time::Duration = std::time::Duration::from_millis(50);
 
     unsafe extern "C" {
         fn getuid() -> u32;
@@ -159,10 +161,51 @@ mod unix_daemon {
         }
     }
 
+    fn stop_process(pid: i32) -> Result<(), String> {
+        if unsafe { kill(pid, SIGTERM) } != 0 {
+            return Err(std::io::Error::last_os_error().to_string());
+        }
+
+        for _ in 0..STOP_ATTEMPTS {
+            if unsafe { kill(pid, 0) } != 0 {
+                return Ok(());
+            }
+            std::thread::sleep(STOP_POLL_INTERVAL);
+        }
+
+        Err(format!(
+            "process {pid} did not stop within {} seconds",
+            STOP_ATTEMPTS as f32 * STOP_POLL_INTERVAL.as_secs_f32()
+        ))
+    }
+
+    fn remove_pid_file() -> Result<(), std::io::Error> {
+        match fs::remove_file(pid_file()) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error),
+        }
+    }
+
+    fn restore_display() {
+        #[cfg(target_os = "macos")]
+        super::macos_impl::apply_filter(1.0, false);
+        #[cfg(target_os = "linux")]
+        super::linux_impl::apply_filter(1.0, false);
+    }
+
     pub fn start_daemon(brightness: u8, red_only: bool) {
         if let Some(pid) = read_running_pid() {
-            eprintln!("Error: red_level is already running with process ID {pid}.");
-            std::process::exit(1);
+            println!("Stopping existing red_level process {pid}...");
+            if let Err(error) = stop_process(pid) {
+                eprintln!("Error: Failed to stop existing red_level process: {error}");
+                std::process::exit(1);
+            }
+            if let Err(error) = remove_pid_file() {
+                eprintln!("Error: Failed to remove the existing PID file: {error}");
+                std::process::exit(1);
+            }
+            restore_display();
         }
 
         let executable = match std::env::current_exe() {
@@ -222,22 +265,14 @@ mod unix_daemon {
             std::process::exit(1);
         };
 
-        if unsafe { kill(pid, SIGTERM) } != 0 {
-            eprintln!(
-                "Error: Failed to stop red_level: {}",
-                std::io::Error::last_os_error()
-            );
+        if let Err(error) = stop_process(pid) {
+            eprintln!("Error: Failed to stop red_level: {error}");
             std::process::exit(1);
         }
 
-        // Clean up display natively upon exit
-        std::thread::sleep(std::time::Duration::from_millis(150));
-        #[cfg(target_os = "macos")]
-        super::macos_impl::apply_filter(1.0, false);
-        #[cfg(target_os = "linux")]
-        super::linux_impl::apply_filter(1.0, false);
+        restore_display();
 
-        if let Err(error) = fs::remove_file(pid_file()) {
+        if let Err(error) = remove_pid_file() {
             eprintln!("Warning: Failed to remove the red_level PID lockfile: {error}");
         }
         println!("red_level daemon stopped; the display has been restored.");
