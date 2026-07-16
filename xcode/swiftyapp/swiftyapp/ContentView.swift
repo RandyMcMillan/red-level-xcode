@@ -70,6 +70,7 @@ struct ContentView: View {
                     Text("Blue \(Int(blueLevel))%")
                         HStack {    
                             Button("Reset") {
+                                preset = .full
                                 resetButtonTapped()
                             }
                         }
@@ -172,8 +173,8 @@ struct ContentView: View {
         redLevel = 100
         greenLevel = 100
         blueLevel = 100
-        preset = .custom
-        applyPreset(.custom)
+        preset = .full
+        applyPreset(.full)
 
         performRustAction("Restored display defaults") {
             RustyLib.resetDisplay()
