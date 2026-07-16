@@ -17,6 +17,7 @@ struct ContentView: View {
     @State private var greenLevel: Double = 100
     @State private var blueLevel: Double = 100
     @State private var preset: ChannelPreset = .custom
+    @State private var isApplyingPreset = false
     @State private var statusMessage = "Ready"
 
     var body: some View {
@@ -24,6 +25,11 @@ struct ContentView: View {
             Form {
                 Section("Brightness") {
                     Slider(value: $brightness, in: 1...100, step: 1)
+                        .onChange(of: brightness) { _, _ in
+                            guard !isApplyingPreset else { return }
+                            preset = .custom
+                            applyCurrentSettings()
+                        }
                     Text("\(Int(brightness))%")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -34,28 +40,32 @@ struct ContentView: View {
                         ForEach(ChannelPreset.allCases) { preset in
                             Text(preset.rawValue).tag(preset)
                         }
-                    }.onChange(of: preset, {
-                        debugPrint("", preset)
-                    })
+                    }
                     .pickerStyle(.segmented)
                 }
 
                 Section("Custom RGB levels") {
                     Slider(value: $redLevel, in: 0...100, step: 1)
-                    .onChange(of: redLevel) { _, newLevel in
+                    .onChange(of: redLevel) { _, _ in
+                        guard !isApplyingPreset else { return }
                         preset = .custom
+                        applyCurrentSettings()
                     }
                     Text("Red \(Int(redLevel))%")
 
                     Slider(value: $greenLevel, in: 0...100, step: 1)
-                    .onChange(of: greenLevel) { _, newLevel in
+                    .onChange(of: greenLevel) { _, _ in
+                        guard !isApplyingPreset else { return }
                         preset = .custom
+                        applyCurrentSettings()
                     }
                     Text("Green \(Int(greenLevel))%")
 
                     Slider(value: $blueLevel, in: 0...100, step: 1)
-                    .onChange(of: blueLevel) { _, newLevel in
+                    .onChange(of: blueLevel) { _, _ in
+                        guard !isApplyingPreset else { return }
                         preset = .custom
+                        applyCurrentSettings()
                     }
                     Text("Blue \(Int(blueLevel))%")
                         HStack {    
@@ -95,30 +105,14 @@ struct ContentView: View {
         .onAppear() {
             startDaemon()
         }
-        .onChange(of: brightness) { _, brightness in
-            applyCurrentSettings()
-            preset = .custom
-        }
-        .onChange(of: redLevel){ _, redLevel in
-            applyCurrentSettings()
-            preset = .custom
-        }
-        .onChange(of: greenLevel){ _, greenLevel in
-            applyCurrentSettings()
-            preset = .custom
-        }
-        .onChange(of: blueLevel){ _, blueLevel in
-            applyCurrentSettings()
-            preset = .custom
-        }
         .onChange(of: preset) { _, newPreset in
-            //preset = .custom
             applyPreset(newPreset)
 
         }
     }
 
     private func applyPreset(_ preset: ChannelPreset) {
+        isApplyingPreset = true
         switch preset {
         case .full:
             redLevel = 100
@@ -138,6 +132,10 @@ struct ContentView: View {
             blueLevel = 100
         case .custom:
             break
+        }
+        applyCurrentSettings()
+        DispatchQueue.main.async {
+            isApplyingPreset = false
         }
     }
 
