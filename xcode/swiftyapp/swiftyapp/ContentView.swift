@@ -34,12 +34,10 @@ struct ContentView: View {
                         ForEach(ChannelPreset.allCases) { preset in
                             Text(preset.rawValue).tag(preset)
                         }
-                    }
+                    }.onChange(of: preset, {
+                        debugPrint("", preset)
+                    })
                     .pickerStyle(.segmented)
-                    //.onChange(of: preset) { _, newPreset in
-                        //applyCurrentSettings()
-                        //preset = newPreset
-                    //}
                 }
 
                 Section("Custom RGB levels") {
@@ -99,23 +97,23 @@ struct ContentView: View {
         }
         .onChange(of: brightness) { _, brightness in
             applyCurrentSettings()
-            //preset = .custom
+            preset = .custom
         }
         .onChange(of: redLevel){ _, redLevel in
             applyCurrentSettings()
-            //preset = .custom
+            preset = .custom
         }
         .onChange(of: greenLevel){ _, greenLevel in
             applyCurrentSettings()
-            //preset = .custom
+            preset = .custom
         }
         .onChange(of: blueLevel){ _, blueLevel in
             applyCurrentSettings()
-            //preset = .custom
+            preset = .custom
         }
         .onChange(of: preset) { _, newPreset in
-            applyPreset(newPreset)
             //preset = .custom
+            applyPreset(newPreset)
 
         }
     }
