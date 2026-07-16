@@ -36,43 +36,61 @@ struct ContentView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    //.onChange(of: preset) { _, newPreset in
+                        //applyCurrentSettings()
+                        //preset = newPreset
+                    //}
                 }
 
                 Section("Custom RGB levels") {
                     Slider(value: $redLevel, in: 0...100, step: 1)
+                    .onChange(of: redLevel) { _, newLevel in
+                        preset = .custom
+                    }
                     Text("Red \(Int(redLevel))%")
 
                     Slider(value: $greenLevel, in: 0...100, step: 1)
+                    .onChange(of: greenLevel) { _, newLevel in
+                        preset = .custom
+                    }
                     Text("Green \(Int(greenLevel))%")
 
                     Slider(value: $blueLevel, in: 0...100, step: 1)
-                    Text("Blue \(Int(blueLevel))%")
-                }
-
-                Section("Actions") {
-                    HStack {
-                        Button("Apply") {
-                            applyCurrentSettings()
-                        }
-
-                        Button("Start") {
-                            startDaemon()
-                        }
-
-                        Button("Stop") {
-                            stopDaemon()
-                        }
-
-                        Button("Reset") {
-                            resetButtonTapped()
-                        }
+                    .onChange(of: blueLevel) { _, newLevel in
+                        preset = .custom
                     }
+                    Text("Blue \(Int(blueLevel))%")
+                        HStack {    
+                            Button("Reset") {
+                                resetButtonTapped()
+                            }
+                        }
                 }
 
-                Section("Status") {
-                    Text(statusMessage)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
+                //Section("Actions") {
+                //    HStack {
+                //        Button("Apply") {
+                //            applyCurrentSettings()
+                //        }
+//
+                //        Button("Start") {
+                //            startDaemon()
+                //        }
+//
+                //        Button("Stop") {
+                //            stopDaemon()
+                //        }
+//
+                //        Button("Reset") {
+                //            resetButtonTapped()
+                //        }
+                //    }
+                //}
+
+                //Section("Status") {
+                //    Text(statusMessage)
+                //        .frame(maxWidth: .infinity, alignment: .leading)
+                //}
             }
             .navigationTitle("Red Level")
         }
@@ -81,18 +99,24 @@ struct ContentView: View {
         }
         .onChange(of: brightness) { _, brightness in
             applyCurrentSettings()
+            //preset = .custom
         }
         .onChange(of: redLevel){ _, redLevel in
             applyCurrentSettings()
+            //preset = .custom
         }
         .onChange(of: greenLevel){ _, greenLevel in
             applyCurrentSettings()
+            //preset = .custom
         }
         .onChange(of: blueLevel){ _, blueLevel in
             applyCurrentSettings()
+            //preset = .custom
         }
         .onChange(of: preset) { _, newPreset in
             applyPreset(newPreset)
+            //preset = .custom
+
         }
     }
 
@@ -149,8 +173,11 @@ struct ContentView: View {
 
     private func resetButtonTapped() {
         brightness = 100
-        preset = .full
-        applyPreset(.full)
+        redLevel = 100
+        greenLevel = 100
+        blueLevel = 100
+        preset = .custom
+        applyPreset(.custom)
 
         performRustAction("Restored display defaults") {
             RustyLib.resetDisplay()
