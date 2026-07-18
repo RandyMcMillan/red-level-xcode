@@ -75,31 +75,6 @@ struct ContentView: View {
                             }
                         }
                 }
-
-                //Section("Actions") {
-                //    HStack {
-                //        Button("Apply") {
-                //            applyCurrentSettings()
-                //        }
-//
-                //        Button("Start") {
-                //            startDaemon()
-                //        }
-//
-                //        Button("Stop") {
-                //            stopDaemon()
-                //        }
-//
-                //        Button("Reset") {
-                //            resetButtonTapped()
-                //        }
-                //    }
-                //}
-
-                //Section("Status") {
-                //    Text(statusMessage)
-                //        .frame(maxWidth: .infinity, alignment: .leading)
-                //}
             }
             .navigationTitle("Red Level")
         }
@@ -116,6 +91,7 @@ struct ContentView: View {
         isApplyingPreset = true
         switch preset {
         case .full:
+            brightness = 100
             redLevel = 100
             greenLevel = 100
             blueLevel = 100
