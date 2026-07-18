@@ -87,3 +87,24 @@ cp -R "./${MY_CRATE}/${XCFRAMEWORK_PATH}" "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_
 # step 4 - move to SwiftLib Sources
 mkdir -p "${SWIFT_SOURCES_PATH}"
 cp "./${MY_CRATE}/out/${MY_CRATE}.swift" "${SWIFT_SOURCES_PATH}/${SWIFT_PROJECT_NAME}.swift"
+
+
+#!/usr/bin/env bash
+
+TARGET_DIR="/Users/git/Library/Containers/org.gnostr.trayapp/Data/Library/Saved Application State/org.gnostr.trayapp.savedState"
+
+echo "[*] Cleaning up existing saved state layout..."
+if [ -d "$TARGET_DIR" ] || [ -L "$TARGET_DIR" ]; then
+    rm -rf "$TARGET_DIR"
+fi
+
+echo "[*] Recreating target container directory..."
+mkdir -p "$TARGET_DIR"
+
+echo "[*] Setting explicit read/write permissions..."
+chmod 755 "$TARGET_DIR"
+
+# Explicitly touch the target file so stat() succeeds on the next initialization pass
+touch "$TARGET_DIR/restorecount.plist"
+
+echo "[+] State directory structure repaired successfully."
