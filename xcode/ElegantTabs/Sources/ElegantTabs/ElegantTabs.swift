@@ -1,0 +1,286 @@
+//
+//  ElegantTabs.swift
+//  ElegantTabs
+//
+//  Created by Sedoykin Alexey on 11/07/2026.
+//
+
+import SwiftUI
+
+// MARK: - TabItem and Builder
+public struct TabItem: Identifiable {
+    public let id = UUID()
+    public let title: Text
+    public let icon: TabIcon
+    public let view: AnyView
+
+    /// Use this initializer for plain, non-localized visible strings.
+    public init<Content: View>(
+        title: String,
+        icon: TabIcon,
+        @ViewBuilder view: () -> Content
+    ) {
+        self.title = Text(verbatim: title)
+        self.icon = icon
+        self.view = AnyView(view())
+    }
+
+    /// Use this initializer for Localizable.xcstrings keys.
+    public init<Content: View>(
+        localizedTitle: LocalizedStringKey,
+        icon: TabIcon,
+        @ViewBuilder view: () -> Content
+    ) {
+        self.title = Text(localizedTitle)
+        self.icon = icon
+        self.view = AnyView(view())
+    }
+
+    /// Use this initializer when the caller already has a prepared Text.
+    public init<Content: View>(
+        title: Text,
+        icon: TabIcon,
+        @ViewBuilder view: () -> Content
+    ) {
+        self.title = title
+        self.icon = icon
+        self.view = AnyView(view())
+    }
+}
+
+/// Result builder to collect TabItem instances into an Array
+@resultBuilder
+public struct TabItemsBuilder {
+    public static func buildBlock(_ items: TabItem...) -> [TabItem] {
+        items
+    }
+}
+
+public enum TabIcon {
+    case system(name: String)
+    case asset(name: String)
+}
+
+public struct TabStyle {
+    public var selectedColor: Color = Color.blue
+    public var unselectedColor: Color = Color.primary
+    public var hoverBackground: Color = Color.gray.opacity(0.3)
+    public var selectedBackground: Color = Color.gray.opacity(0.3)
+    public var backgroundColor: Color = Color(nsColor: .windowBackgroundColor)
+    public var iconSize: CGFloat = 24
+    public var font: Font = .caption
+    public var cornerRadius: CGFloat = 8
+    public var padding: CGFloat = 12
+    public var tabHeight: CGFloat = 50
+    public var selectedPadding: CGFloat = 4
+
+    public static let `default` = TabStyle()
+
+    public init(
+        selectedColor: Color = Color.blue,
+        unselectedColor: Color = Color.primary,
+        hoverBackground: Color = Color.gray.opacity(0.3),
+        selectedBackground: Color = Color.gray.opacity(0.3),
+        backgroundColor: Color = Color(nsColor: .windowBackgroundColor),
+        iconSize: CGFloat = 24,
+        font: Font = .caption,
+        cornerRadius: CGFloat = 8,
+        padding: CGFloat = 12,
+        tabHeight: CGFloat = 50,
+        selectedPadding: CGFloat = 4
+    ) {
+        self.selectedColor = selectedColor
+        self.unselectedColor = unselectedColor
+        self.hoverBackground = hoverBackground
+        self.selectedBackground = selectedBackground
+        self.backgroundColor = backgroundColor
+        self.iconSize = iconSize
+        self.font = font
+        self.cornerRadius = cornerRadius
+        self.padding = padding
+        self.tabHeight = tabHeight
+        self.selectedPadding = selectedPadding
+    }
+}
+
+struct TabButtonStyle: ButtonStyle {
+    let style: TabStyle
+    let isSelected: Bool
+    let isHovered: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        let fillColor = isSelected
+            ? style.selectedBackground
+            : (isHovered ? style.hoverBackground : Color.clear)
+
+        return configuration.label
+            .font(style.font)
+            .padding(style.padding)
+            .frame(height: style.tabHeight)
+            .background(
+                RoundedRectangle(cornerRadius: style.cornerRadius)
+                    .fill(fillColor)
+            )
+            .padding(isSelected ? style.selectedPadding : 0)
+            .frame(maxWidth: .infinity)
+            .foregroundColor(isSelected ? style.selectedColor : style.unselectedColor)
+            .contentShape(Rectangle())
+    }
+}
+
+// MARK: - ElegantTabsView
+
+public struct ElegantTabsView: View {
+    @Binding public var selection: Int
+    public let items: [TabItem]
+    public let style: TabStyle
+
+    @State private var hoveredIndex: Int? = nil
+
+    public init(
+        selection: Binding<Int>,
+        style: TabStyle = .default,
+        @TabItemsBuilder items: () -> [TabItem]
+    ) {
+        self._selection = selection
+        self.style = style
+        self.items = items()
+    }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                    Button {
+                        selection = index
+                    } label: {
+                        VStack(spacing: 4) {
+                            switch item.icon {
+                            case .system(let name):
+                                Image(systemName: name)
+                                    .font(.system(size: style.iconSize))
+
+                            case .asset(let name):
+                                Image(name)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: style.iconSize, height: style.iconSize)
+                            }
+
+                            item.title
+                        }
+                        .accessibilityLabel(item.title)
+                        .onHover { hovering in
+                            hoveredIndex = hovering ? index : nil
+                        }
+                    }
+                    .buttonStyle(
+                        TabButtonStyle(
+                            style: style,
+                            isSelected: selection == index,
+                            isHovered: hoveredIndex == index
+                        )
+                    )
+                }
+            }
+            .background(style.backgroundColor)
+
+            selectedView
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private var selectedView: some View {
+        if items.indices.contains(selection) {
+            items[selection].view
+        } else {
+            EmptyView()
+        }
+    }
+}
+
+
+// MARK: - Previews
+#Preview {
+    Group {
+        // Default Style
+        ElegantTabsPreview(selection: 0, style: .default)
+            .previewDisplayName("Default Style")
+            .frame(width: 600, height: 400)
+
+        // Bold & Large Tabs
+        ElegantTabsPreview(
+            selection: 1,
+            style: TabStyle(
+                selectedColor: .white,
+                unselectedColor: .gray,
+                hoverBackground: Color.blue.opacity(0.2),
+                selectedBackground: Color.blue.opacity(0.3),
+                backgroundColor: Color(nsColor: .windowBackgroundColor),
+                iconSize: 30,
+                font: .headline,
+                cornerRadius: 12,
+                padding: 16,
+                tabHeight: 60,
+                selectedPadding: 8
+            )
+        )
+        .previewDisplayName("Bold & Large Tabs")
+        .frame(width: 600, height: 400)
+
+        // Compact Tabs (smaller height, tighter padding)
+        ElegantTabsPreview(
+            selection: 2,
+            style: TabStyle(
+                padding: 6,
+                tabHeight: 40,
+                selectedPadding: 2
+            )
+        )
+        .previewDisplayName("Compact Tabs")
+        .frame(width: 600, height: 300)
+
+        // Small Icons & Captions
+        ElegantTabsPreview(
+            selection: 3,
+            style: TabStyle(
+                iconSize: 20,
+                font: .caption2
+            )
+        )
+        .previewDisplayName("Small Icons & Captions")
+        .frame(width: 600, height: 300)
+    }
+}
+
+private struct ElegantTabsPreview: View {
+    @State private var selection: Int
+    let style: TabStyle
+
+    init(selection: Int = 0, style: TabStyle = .default) {
+        self._selection = State(initialValue: selection)
+        self.style = style
+    }
+
+    var body: some View {
+        ElegantTabsView(selection: $selection, style: style) {
+            TabItem(title: "HF Propagation", icon: .system(name: "antenna.radiowaves.left.and.right")) {
+                Text("HF Propagation details")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            TabItem(title: "VHF Propagation", icon: .system(name: "antenna.radiowaves.left.and.right")) {
+                Text("VHF Propagation details")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            TabItem(title: "Solar Weather", icon: .system(name: "sun.max")) {
+                Text("Solar Weather data")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            TabItem(title: "Settings", icon: .system(name: "gearshape")) {
+                Text("App Settings")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+    }
+}
