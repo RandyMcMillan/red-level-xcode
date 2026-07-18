@@ -11,6 +11,8 @@ import Foundation
 import Network
 import Combine
 
+import LoggerHelper
+
 class Helpers:ObservableObject {
     static let shared = Helpers() // Singleton for reusability
     let appState = AppState.shared
@@ -59,7 +61,7 @@ class Helpers:ObservableObject {
         }
         
         // If none of the formats worked
-        //LoggerHelper.error("Failed to parse the date string")
+        LoggerHelper.error("Failed to parse the date string")
         return ""
     }
         
@@ -70,13 +72,13 @@ class Helpers:ObservableObject {
         monitor.pathUpdateHandler = { path in
             if path.status == .satisfied {
                 // Internet connection is available
-                //LoggerHelper.info("Internet access is available")
+                LoggerHelper.info("Internet access is available")
                 DispatchQueue.main.async {
                     completion() // Call the completion handler
                 }
                 monitor.cancel() // Stop monitoring once the connection is available
             } else{
-                //LoggerHelper.error("The Internet access does not work")
+                LoggerHelper.error("The Internet access does not work")
             }
         }
 

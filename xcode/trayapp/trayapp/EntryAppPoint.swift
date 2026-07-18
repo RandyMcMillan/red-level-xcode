@@ -9,11 +9,17 @@ import SwiftUI
 import AppKit
 import Foundation
 
+import Cocoa
+
 @main
 struct EntryPointApp: App {
     @Environment(\.openWindow) var openWindow
     @StateObject private var appState = AppState.shared
     init() {
+        // Disable the persistent UI system globally for this process before AppKit starts up
+        UserDefaults.standard.set(true, forKey: "NSQuitAlwaysKeepsWindows")
+        UserDefaults.standard.set(false, forKey: "NSPersistentUICompleteStateSaveOnQuit")
+
         ensureSavedStateDirectoryExists()
         AppStateFixer.repairSavedStateDirectory()
         Helpers.checkInternetConnection {
