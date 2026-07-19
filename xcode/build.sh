@@ -87,6 +87,7 @@ for SWIFT_APP in "${SWIFT_APPS[@]}"; do
     mkdir -p "${SWIFT_ARTIFACTS_PATH}"
     rm -rf "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
     cp -R "./${MY_CRATE}/${XCFRAMEWORK_PATH}" "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
+    codesign --force --sign - --timestamp=none --deep "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
 
     mkdir -p "${SWIFT_SOURCES_PATH}"
     cp "./${MY_CRATE}/out/${MY_CRATE}.swift" "${SWIFT_SOURCES_PATH}/${SWIFT_PROJECT_NAME}.swift"
