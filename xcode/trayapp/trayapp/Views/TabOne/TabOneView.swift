@@ -104,7 +104,7 @@ struct TabOneContent: View {
         }
         .onAppear() {
             restoreCustomSettings()
-            startDaemon()
+            startTrayappSession()
         }
         .onChange(of: preset) { _, newPreset in
             applyPreset(newPreset)
@@ -209,9 +209,9 @@ struct TabOneContent: View {
         }
     }
 
-    private func startDaemon() {
-        performRustAction("Started background daemon") {
-            startDisplayDaemon(
+    private func startTrayappSession() {
+        performRustAction("Started tray display session") {
+            RustyLib.startTrayappDisplaySession(
                 brightness: UInt8(brightness),
                 red: UInt8(redLevel),
                 green: UInt8(greenLevel),
