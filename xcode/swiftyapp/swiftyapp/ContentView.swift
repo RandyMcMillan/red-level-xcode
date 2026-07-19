@@ -2,7 +2,7 @@ import RustyLib
 import SwiftUI
 
 private enum ChannelPreset: String, CaseIterable, Identifiable {
-    case full = "Full"
+    //case full = "Full"
     case red = "Red"
     case green = "Green"
     case blue = "Blue"
@@ -41,14 +41,15 @@ struct ContentView: View {
             Form {
                 Section("Brightness") {
                     Slider(value: $brightness, in: 1...100, step: 1)
+                        .tint(.gray)
                         .onChange(of: brightness) { _, _ in
                             guard !isApplyingPreset else { return }
                             saveCurrentPresetSettings()
                             applyCurrentSettings()
                         }
-                    Text("\(Int(brightness))%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    //Text("\(Int(brightness))%")
+                    //    .font(.caption)
+                    //    .foregroundStyle(.secondary)
                 }
 
                 Section("Channel preset") {
@@ -60,7 +61,7 @@ struct ContentView: View {
                     .pickerStyle(.segmented)
                 }
 
-                Section("Custom RGB levels")/* we want a simple reset button here in the ui*/ {
+                Section("")/* we want a simple reset button here in the ui*/ {
                     Slider(value: $redLevel, in: 0...100, step: 1)
                         .tint(.red)
                     .onChange(of: redLevel) { _, _ in
@@ -88,19 +89,25 @@ struct ContentView: View {
                     }
                     //Text("Blue \(Int(blueLevel))%")
                         HStack {
+                            Text(statusMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            Divider()
+                            Spacer()
                             Button("Reset") {
                                 resetButtonTapped()
                             }
                         }
                 }
 
-                Section {
-                    Text(statusMessage)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                } footer: {
-                    //Text("Preset values are saved locally on this device.")
-                }
+                //Section {
+                //    Text(statusMessage)
+                //        .font(.footnote)
+                //        .foregroundStyle(.secondary)
+                //}
+                //footer: {
+                 //   Text("Preset values are saved locally on this device.")
+                //}
             }
             //.navigationTitle("Red Level")
         }
@@ -117,11 +124,11 @@ struct ContentView: View {
     private func applyPreset(_ preset: ChannelPreset) {
         isApplyingPreset = true
         switch preset {
-        case .full:
-            brightness = 100
-            redLevel = 100
-            greenLevel = 100
-            blueLevel = 100
+        //case .full:
+        //    brightness = 100
+        //    redLevel = 100
+        //    greenLevel = 100
+        //    blueLevel = 100
         case .red:
             restoreRedSettings()
         case .green:
@@ -206,8 +213,8 @@ struct ContentView: View {
 
     private func saveCurrentPresetSettings() {
         switch preset {
-        case .full:
-            break
+        //case .full:
+        //    break
         case .red:
             saveRedSettings()
         case .green:
@@ -239,11 +246,11 @@ struct ContentView: View {
     private func resetButtonTapped() {
         isApplyingPreset = true
         switch preset {
-        case .full:
-            brightness = 100
-            redLevel = 100
-            greenLevel = 100
-            blueLevel = 100
+        //case .full:
+        //    brightness = 100
+        //    redLevel = 100
+        //    greenLevel = 100
+        //    blueLevel = 100
         case .red:
             brightness = 100
             redLevel = 100
