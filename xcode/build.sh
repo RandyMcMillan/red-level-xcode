@@ -39,12 +39,12 @@ DEVICE_TARGET="aarch64-apple-ios"
 case "$(uname -m)" in
     arm64)
         MACOS_TARGET="aarch64-apple-darwin"
-        SIMULATOR_TARGET="aarch64-apple-ios-sim"
+        SIMULATOR_TARGETS=("aarch64-apple-ios-sim" "x86_64-apple-ios")
         CATALYST_TARGET="aarch64-apple-ios-macabi"
         ;;
     x86_64)
         MACOS_TARGET="x86_64-apple-darwin"
-        SIMULATOR_TARGET="x86_64-apple-ios"
+        SIMULATOR_TARGETS=("x86_64-apple-ios" "aarch64-apple-ios-sim")
         CATALYST_TARGET="x86_64-apple-ios-macabi"
         ;;
     *)
@@ -53,7 +53,7 @@ case "$(uname -m)" in
         ;;
 esac
 
-targets=("${DEVICE_TARGET}" "${SIMULATOR_TARGET}" "${CATALYST_TARGET}" "${MACOS_TARGET}")
+targets=("${DEVICE_TARGET}" "${SIMULATOR_TARGETS[@]}" "${CATALYST_TARGET}" "${MACOS_TARGET}")
 
 for target in "${targets[@]}"; do
     rustup target add ${target}
@@ -65,11 +65,19 @@ mkdir -p "${NEW_HEADER_DIR}"
 cp "${HEADERPATH}" "${NEW_HEADER_DIR}/"
 cp "out/${MY_CRATE}FFI.modulemap" "${NEW_HEADER_DIR}/module.modulemap"
 
+SIMULATOR_COMBINED_DIR="${TARGETDIR}/simulator-universal/${RELDIR}"
+mkdir -p "${SIMULATOR_COMBINED_DIR}"
+SIMULATOR_COMBINED_LIB="${SIMULATOR_COMBINED_DIR}/${STATIC_LIB_NAME}"
+lipo -create \
+    "${TARGETDIR}/${SIMULATOR_TARGETS[0]}/${RELDIR}/${STATIC_LIB_NAME}" \
+    "${TARGETDIR}/${SIMULATOR_TARGETS[1]}/${RELDIR}/${STATIC_LIB_NAME}" \
+    -output "${SIMULATOR_COMBINED_LIB}"
+
 rm -rf "${XCFRAMEWORK_PATH}"
 
 xcodebuild -create-xcframework \
     -library "${TARGETDIR}/${DEVICE_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
-    -library "${TARGETDIR}/${SIMULATOR_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
+    -library "${SIMULATOR_COMBINED_LIB}" -headers "${NEW_HEADER_DIR}" \
     -library "${TARGETDIR}/${CATALYST_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
     -library "${TARGETDIR}/${MACOS_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
     -output "${XCFRAMEWORK_PATH}"
