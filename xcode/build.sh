@@ -18,7 +18,7 @@ if ! command -v rustup >/dev/null 2>&1; then
 fi
 
 MY_CRATE=rustylib
-SWIFT_APP=Red-Level
+SWIFT_APPS=("Red-Level" "swiftyapp")
 SWIFT_PROJECT=swiftyrustlib
 SWIFT_PROJECT_NAME=RustyLib
 SWIFT_CORE_NAME=RustyCore
@@ -53,7 +53,7 @@ case "$(uname -m)" in
         ;;
 esac
 
-targets=("${DEVICE_TARGET}" "${SIMULATOR_TARGET}" "${CATALYST_TARGET}")
+targets=("${DEVICE_TARGET}" "${SIMULATOR_TARGET}" "${CATALYST_TARGET}" "${MACOS_TARGET}")
 
 for target in "${targets[@]}"; do
     rustup target add ${target}
@@ -71,24 +71,26 @@ xcodebuild -create-xcframework \
     -library "${TARGETDIR}/${DEVICE_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
     -library "${TARGETDIR}/${SIMULATOR_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
     -library "${TARGETDIR}/${CATALYST_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
+    -library "${TARGETDIR}/${MACOS_TARGET}/${RELDIR}/${STATIC_LIB_NAME}" -headers "${NEW_HEADER_DIR}" \
     -output "${XCFRAMEWORK_PATH}"
 
 rm -rf "${NEW_HEADER_DIR}"
 
 cd ../
 
-SWIFT_LIB_PATH="./${SWIFT_APP}/Lib/${SWIFT_PROJECT}"
-SWIFT_ARTIFACTS_PATH="${SWIFT_LIB_PATH}/artifacts"
-SWIFT_SOURCES_PATH="${SWIFT_LIB_PATH}/Sources/${SWIFT_PROJECT_NAME}"
+# step 3 - move to SwiftLib artifacts and sources
+for SWIFT_APP in "${SWIFT_APPS[@]}"; do
+    SWIFT_LIB_PATH="./${SWIFT_APP}/Lib/${SWIFT_PROJECT}"
+    SWIFT_ARTIFACTS_PATH="${SWIFT_LIB_PATH}/artifacts"
+    SWIFT_SOURCES_PATH="${SWIFT_LIB_PATH}/Sources/${SWIFT_PROJECT_NAME}"
 
-# step 3 - move to SwiftLib artifacts
-mkdir -p "${SWIFT_ARTIFACTS_PATH}"
-rm -rf "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
-cp -R "./${MY_CRATE}/${XCFRAMEWORK_PATH}" "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
+    mkdir -p "${SWIFT_ARTIFACTS_PATH}"
+    rm -rf "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
+    cp -R "./${MY_CRATE}/${XCFRAMEWORK_PATH}" "${SWIFT_ARTIFACTS_PATH}/${SWIFT_CORE_NAME}.xcframework"
 
-# step 4 - move to SwiftLib Sources
-mkdir -p "${SWIFT_SOURCES_PATH}"
-cp "./${MY_CRATE}/out/${MY_CRATE}.swift" "${SWIFT_SOURCES_PATH}/${SWIFT_PROJECT_NAME}.swift"
+    mkdir -p "${SWIFT_SOURCES_PATH}"
+    cp "./${MY_CRATE}/out/${MY_CRATE}.swift" "${SWIFT_SOURCES_PATH}/${SWIFT_PROJECT_NAME}.swift"
+done
 
 
 #!/usr/bin/env bash
