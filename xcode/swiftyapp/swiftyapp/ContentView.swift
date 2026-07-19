@@ -86,7 +86,6 @@ struct ContentView: View {
                     Text("Blue \(Int(blueLevel))%")
                         HStack {    
                             Button("Reset") {
-                                preset = .full
                                 resetButtonTapped()
                             }
                         }
