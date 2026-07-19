@@ -504,6 +504,17 @@ public func startDisplayDaemon(brightness: UInt8, red: UInt8, green: UInt8, blue
     })
 }
 
+public func startTrayappDisplaySession(brightness: UInt8, red: UInt8, green: UInt8, blue: UInt8) -> Bool {
+    return try! FfiConverterBool.lift(try! rustCall {
+        uniffi_rustylib_fn_func_start_trayapp_display_session(
+            FfiConverterUInt8.lower(brightness),
+            FfiConverterUInt8.lower(red),
+            FfiConverterUInt8.lower(green),
+            FfiConverterUInt8.lower(blue), $0
+        )
+    })
+}
+
 public func stopDisplayDaemon() -> Bool {
     return try! FfiConverterBool.lift(try! rustCall {
         uniffi_rustylib_fn_func_stop_display_daemon($0)
@@ -533,6 +544,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if uniffi_rustylib_checksum_func_start_display_daemon() != 19560 {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if uniffi_rustylib_checksum_func_start_trayapp_display_session() != 30703 {
         return InitializationResult.apiChecksumMismatch
     }
     if uniffi_rustylib_checksum_func_stop_display_daemon() != 7796 {
