@@ -60,14 +60,14 @@ struct ContentView: View {
                     .pickerStyle(.segmented)
                 }
 
-                Section("Custom RGB levels") {
+                Section("Custom RGB levels")/* we want a simple reset button here in the ui*/ {
                     Slider(value: $redLevel, in: 0...100, step: 1)
                     .onChange(of: redLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
-                    Text("Red \(Int(redLevel))%")
+                    //Text("Red \(Int(redLevel))%")
 
                     Slider(value: $greenLevel, in: 0...100, step: 1)
                     .onChange(of: greenLevel) { _, _ in
@@ -75,7 +75,7 @@ struct ContentView: View {
                         saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
-                    Text("Green \(Int(greenLevel))%")
+                    //Text("Green \(Int(greenLevel))%")
 
                     Slider(value: $blueLevel, in: 0...100, step: 1)
                     .onChange(of: blueLevel) { _, _ in
@@ -83,8 +83,8 @@ struct ContentView: View {
                         saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
-                    Text("Blue \(Int(blueLevel))%")
-                        HStack {    
+                    //Text("Blue \(Int(blueLevel))%")
+                        HStack {
                             Button("Reset") {
                                 resetButtonTapped()
                             }
