@@ -90,6 +90,14 @@ struct ContentView: View {
                             }
                         }
                 }
+
+                Section {
+                    Text(statusMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } footer: {
+                    //Text("Preset values are saved locally on this device.")
+                }
             }
             //.navigationTitle("Red Level")
         }
