@@ -18,7 +18,7 @@ if ! command -v rustup >/dev/null 2>&1; then
 fi
 
 MY_CRATE=rustylib
-SWIFT_APP=swiftyapp
+SWIFT_APP=Red-Level
 SWIFT_PROJECT=swiftyrustlib
 SWIFT_PROJECT_NAME=RustyLib
 SWIFT_CORE_NAME=RustyCore
@@ -38,10 +38,12 @@ DEVICE_TARGET="aarch64-apple-ios"
 
 case "$(uname -m)" in
     arm64)
+        MACOS_TARGET="aarch64-apple-darwin"
         SIMULATOR_TARGET="aarch64-apple-ios-sim"
         CATALYST_TARGET="aarch64-apple-ios-macabi"
         ;;
     x86_64)
+        MACOS_TARGET="x86_64-apple-darwin"
         SIMULATOR_TARGET="x86_64-apple-ios"
         CATALYST_TARGET="x86_64-apple-ios-macabi"
         ;;

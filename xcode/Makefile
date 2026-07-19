@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
-PROJECT := swiftyapp/swiftyapp.xcodeproj
-SCHEME := swiftyapp
+PROJECT := swiftyapp/Red-Level.xcodeproj
+SCHEME := Red-Level
 BUILD_SCRIPT := ./build.sh
 RUST_CRATE_DIR := rustylib
 DERIVED_DATA ?= .build/xcode
