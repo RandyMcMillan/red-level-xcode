@@ -5,7 +5,8 @@ let package = Package(
     name: "RustyLib",
     platforms: [
         .iOS(.v15),
-        .macCatalyst(.v15)
+        .macCatalyst(.v15),
+        .macOS(.v14)
     ],
     products: [
         .library(
