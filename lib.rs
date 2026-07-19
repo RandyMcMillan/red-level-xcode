@@ -176,6 +176,10 @@ pub fn apply_display(brightness: u8, channel_levels: [u8; 3]) -> Result<(), Stri
     }
 }
 
+pub fn start_trayapp_display_session(brightness: u8, channel_levels: [u8; 3]) -> Result<(), String> {
+    apply_display(brightness, channel_levels)
+}
+
 pub fn reset_display() -> Result<(), String> {
     #[cfg(target_os = "windows")]
     {
