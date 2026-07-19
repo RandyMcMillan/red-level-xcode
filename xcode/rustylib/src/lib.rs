@@ -6,6 +6,11 @@ fn apply_display(brightness: u8, red: u8, green: u8, blue: u8) -> bool {
 }
 
 #[uniffi::export]
+fn start_trayapp_display_session(brightness: u8, red: u8, green: u8, blue: u8) -> bool {
+    red_level::start_trayapp_display_session(brightness, [red, green, blue]).is_ok()
+}
+
+#[uniffi::export]
 fn start_display_daemon(brightness: u8, red: u8, green: u8, blue: u8) -> bool {
     red_level::start_daemon(brightness, [red, green, blue]).is_ok()
 }
