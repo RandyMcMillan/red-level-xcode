@@ -14,5 +14,6 @@ struct swiftyappApp: App {
         return WindowGroup {
             ContentView()
         }
+        .defaultSize(width: 360, height: 640)
     }
 }
