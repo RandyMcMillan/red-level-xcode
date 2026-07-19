@@ -227,15 +227,46 @@ struct ContentView: View {
     }
 
     private func resetButtonTapped() {
-        brightness = 100
-        redLevel = 100
-        greenLevel = 100
-        blueLevel = 100
-        preset = .full
-        applyPreset(.full)
+        isApplyingPreset = true
+        switch preset {
+        case .full:
+            brightness = 100
+            redLevel = 100
+            greenLevel = 100
+            blueLevel = 100
+        case .red:
+            brightness = 100
+            redLevel = 100
+            greenLevel = 0
+            blueLevel = 0
+            saveRedSettings()
+        case .green:
+            brightness = 100
+            redLevel = 0
+            greenLevel = 100
+            blueLevel = 0
+            saveGreenSettings()
+        case .blue:
+            brightness = 100
+            redLevel = 0
+            greenLevel = 0
+            blueLevel = 100
+            saveBlueSettings()
+        case .custom:
+            brightness = 100
+            redLevel = 100
+            greenLevel = 100
+            blueLevel = 100
+            saveCustomSettings()
+        }
 
         performRustAction("Restored display defaults") {
             RustyLib.resetDisplay()
+        }
+
+        applyCurrentSettings()
+        DispatchQueue.main.async {
+            isApplyingPreset = false
         }
     }
 
