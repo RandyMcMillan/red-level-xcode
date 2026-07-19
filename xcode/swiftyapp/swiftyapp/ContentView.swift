@@ -12,6 +12,10 @@ private enum ChannelPreset: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
+    @AppStorage("customBrightness") private var savedCustomBrightness: Double = 100
+    @AppStorage("customRedLevel") private var savedCustomRedLevel: Double = 100
+    @AppStorage("customGreenLevel") private var savedCustomGreenLevel: Double = 100
+    @AppStorage("customBlueLevel") private var savedCustomBlueLevel: Double = 100
     @State private var brightness: Double = 100
     @State private var redLevel: Double = 100
     @State private var greenLevel: Double = 100
@@ -28,6 +32,7 @@ struct ContentView: View {
                         .onChange(of: brightness) { _, _ in
                             guard !isApplyingPreset else { return }
                             preset = .custom
+                            saveCustomSettings()
                             applyCurrentSettings()
                         }
                     Text("\(Int(brightness))%")
@@ -49,6 +54,7 @@ struct ContentView: View {
                     .onChange(of: redLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         preset = .custom
+                        saveCustomSettings()
                         applyCurrentSettings()
                     }
                     Text("Red \(Int(redLevel))%")
@@ -57,6 +63,7 @@ struct ContentView: View {
                     .onChange(of: greenLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         preset = .custom
+                        saveCustomSettings()
                         applyCurrentSettings()
                     }
                     Text("Green \(Int(greenLevel))%")
@@ -65,6 +72,7 @@ struct ContentView: View {
                     .onChange(of: blueLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         preset = .custom
+                        saveCustomSettings()
                         applyCurrentSettings()
                     }
                     Text("Blue \(Int(blueLevel))%")
@@ -79,6 +87,7 @@ struct ContentView: View {
             .navigationTitle("Red Level")
         }
         .onAppear() {
+            restoreCustomSettings()
             startDaemon()
         }
         .onChange(of: preset) { _, newPreset in
@@ -108,7 +117,7 @@ struct ContentView: View {
             greenLevel = 0
             blueLevel = 100
         case .custom:
-            break
+            restoreCustomSettings()
         }
         applyCurrentSettings()
         DispatchQueue.main.async {
@@ -125,6 +134,20 @@ struct ContentView: View {
                 blue: UInt8(blueLevel)
             )
         }
+    }
+
+    private func restoreCustomSettings() {
+        brightness = savedCustomBrightness
+        redLevel = savedCustomRedLevel
+        greenLevel = savedCustomGreenLevel
+        blueLevel = savedCustomBlueLevel
+    }
+
+    private func saveCustomSettings() {
+        savedCustomBrightness = brightness
+        savedCustomRedLevel = redLevel
+        savedCustomGreenLevel = greenLevel
+        savedCustomBlueLevel = blueLevel
     }
 
     private func startDaemon() {
