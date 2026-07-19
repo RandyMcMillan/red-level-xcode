@@ -91,7 +91,7 @@ struct ContentView: View {
                         }
                 }
             }
-            .navigationTitle("Red Level")
+            //.navigationTitle("Red Level")
         }
         .onAppear() {
             restoreCustomSettings()
