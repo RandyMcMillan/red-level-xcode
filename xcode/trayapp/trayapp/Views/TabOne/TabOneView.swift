@@ -24,28 +24,28 @@ struct TabOneContent: View {
                 .tint(.gray)
                 .onChange(of: viewModel.brightness) { _, _ in
                     guard !viewModel.isApplyingPreset else { return }
-                    viewModel.applyCurrentSettings()
+                    viewModel.scheduleCurrentSettingsApply()
                 }
 
             Slider(value: $viewModel.redLevel, in: 0...100, step: 1)
                 .tint(.red)
                 .onChange(of: viewModel.redLevel) { _, _ in
                     guard !viewModel.isApplyingPreset else { return }
-                    viewModel.applyCurrentSettings()
+                    viewModel.scheduleCurrentSettingsApply()
                 }
 
             Slider(value: $viewModel.greenLevel, in: 0...100, step: 1)
                 .tint(.green)
                 .onChange(of: viewModel.greenLevel) { _, _ in
                     guard !viewModel.isApplyingPreset else { return }
-                    viewModel.applyCurrentSettings()
+                    viewModel.scheduleCurrentSettingsApply()
                 }
 
             Slider(value: $viewModel.blueLevel, in: 0...100, step: 1)
                 .tint(.blue)
                 .onChange(of: viewModel.blueLevel) { _, _ in
                     guard !viewModel.isApplyingPreset else { return }
-                    viewModel.applyCurrentSettings()
+                    viewModel.scheduleCurrentSettingsApply()
                 }
 
             HStack {
@@ -64,7 +64,7 @@ struct TabOneContent: View {
         }
         .padding()
         .onAppear {
-            viewModel.startDaemon()
+            viewModel.applyCurrentSettings()
         }
     }
 }

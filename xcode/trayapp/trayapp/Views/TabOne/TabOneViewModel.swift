@@ -16,19 +16,10 @@ final class TabOneViewModel: ObservableObject {
     @Published var blueLevel: Double = 100
     @Published var statusMessage: String = "Ready"
     @Published private(set) var isApplyingPreset = false
-
-    func startDaemon() {
-        performRustAction("Started background daemon") {
-            startDisplayDaemon(
-                brightness: UInt8(brightness),
-                red: UInt8(redLevel),
-                green: UInt8(greenLevel),
-                blue: UInt8(blueLevel)
-            )
-        }
-    }
+    private var pendingApplyTask: Task<Void, Never>?
 
     func applyCurrentSettings() {
+        cancelPendingApply()
         performRustAction("Applied display settings") {
             applyDisplay(
                 brightness: UInt8(brightness),
@@ -56,6 +47,7 @@ final class TabOneViewModel: ObservableObject {
     }
 
     func resetDisplay() {
+        cancelPendingApply()
         isApplyingPreset = true
         defer { isApplyingPreset = false }
 
@@ -73,6 +65,7 @@ final class TabOneViewModel: ObservableObject {
     }
 
     private func applyPreset(brightness: Double, red: Double, green: Double, blue: Double, message: String) {
+        cancelPendingApply()
         isApplyingPreset = true
         defer { isApplyingPreset = false }
 
@@ -88,6 +81,20 @@ final class TabOneViewModel: ObservableObject {
                 blue: UInt8(self.blueLevel)
             )
         }
+    }
+
+    func scheduleCurrentSettingsApply() {
+        cancelPendingApply()
+        pendingApplyTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            guard !Task.isCancelled, let self else { return }
+            await self.applyCurrentSettings()
+        }
+    }
+
+    private func cancelPendingApply() {
+        pendingApplyTask?.cancel()
+        pendingApplyTask = nil
     }
 
     private func performRustAction(_ successMessage: String, action: () -> Bool) {
