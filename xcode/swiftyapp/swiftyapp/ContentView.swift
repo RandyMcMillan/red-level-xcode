@@ -16,6 +16,18 @@ struct ContentView: View {
     @AppStorage("customRedLevel") private var savedCustomRedLevel: Double = 100
     @AppStorage("customGreenLevel") private var savedCustomGreenLevel: Double = 100
     @AppStorage("customBlueLevel") private var savedCustomBlueLevel: Double = 100
+    @AppStorage("redBrightness") private var savedRedBrightness: Double = 100
+    @AppStorage("redRedLevel") private var savedRedRedLevel: Double = 100
+    @AppStorage("redGreenLevel") private var savedRedGreenLevel: Double = 0
+    @AppStorage("redBlueLevel") private var savedRedBlueLevel: Double = 0
+    @AppStorage("greenBrightness") private var savedGreenBrightness: Double = 100
+    @AppStorage("greenRedLevel") private var savedGreenRedLevel: Double = 0
+    @AppStorage("greenGreenLevel") private var savedGreenGreenLevel: Double = 100
+    @AppStorage("greenBlueLevel") private var savedGreenBlueLevel: Double = 0
+    @AppStorage("blueBrightness") private var savedBlueBrightness: Double = 100
+    @AppStorage("blueRedLevel") private var savedBlueRedLevel: Double = 0
+    @AppStorage("blueGreenLevel") private var savedBlueGreenLevel: Double = 0
+    @AppStorage("blueBlueLevel") private var savedBlueBlueLevel: Double = 100
     @State private var brightness: Double = 100
     @State private var redLevel: Double = 100
     @State private var greenLevel: Double = 100
@@ -31,8 +43,7 @@ struct ContentView: View {
                     Slider(value: $brightness, in: 1...100, step: 1)
                         .onChange(of: brightness) { _, _ in
                             guard !isApplyingPreset else { return }
-                            preset = .custom
-                            saveCustomSettings()
+                            saveCurrentPresetSettings()
                             applyCurrentSettings()
                         }
                     Text("\(Int(brightness))%")
@@ -53,8 +64,7 @@ struct ContentView: View {
                     Slider(value: $redLevel, in: 0...100, step: 1)
                     .onChange(of: redLevel) { _, _ in
                         guard !isApplyingPreset else { return }
-                        preset = .custom
-                        saveCustomSettings()
+                        saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
                     Text("Red \(Int(redLevel))%")
@@ -62,8 +72,7 @@ struct ContentView: View {
                     Slider(value: $greenLevel, in: 0...100, step: 1)
                     .onChange(of: greenLevel) { _, _ in
                         guard !isApplyingPreset else { return }
-                        preset = .custom
-                        saveCustomSettings()
+                        saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
                     Text("Green \(Int(greenLevel))%")
@@ -71,8 +80,7 @@ struct ContentView: View {
                     Slider(value: $blueLevel, in: 0...100, step: 1)
                     .onChange(of: blueLevel) { _, _ in
                         guard !isApplyingPreset else { return }
-                        preset = .custom
-                        saveCustomSettings()
+                        saveCurrentPresetSettings()
                         applyCurrentSettings()
                     }
                     Text("Blue \(Int(blueLevel))%")
@@ -105,17 +113,11 @@ struct ContentView: View {
             greenLevel = 100
             blueLevel = 100
         case .red:
-            redLevel = 100
-            greenLevel = 0
-            blueLevel = 0
+            restoreRedSettings()
         case .green:
-            redLevel = 0
-            greenLevel = 100
-            blueLevel = 0
+            restoreGreenSettings()
         case .blue:
-            redLevel = 0
-            greenLevel = 0
-            blueLevel = 100
+            restoreBlueSettings()
         case .custom:
             restoreCustomSettings()
         }
@@ -148,6 +150,63 @@ struct ContentView: View {
         savedCustomRedLevel = redLevel
         savedCustomGreenLevel = greenLevel
         savedCustomBlueLevel = blueLevel
+    }
+
+    private func restoreRedSettings() {
+        brightness = savedRedBrightness
+        redLevel = savedRedRedLevel
+        greenLevel = savedRedGreenLevel
+        blueLevel = savedRedBlueLevel
+    }
+
+    private func saveRedSettings() {
+        savedRedBrightness = brightness
+        savedRedRedLevel = redLevel
+        savedRedGreenLevel = greenLevel
+        savedRedBlueLevel = blueLevel
+    }
+
+    private func restoreGreenSettings() {
+        brightness = savedGreenBrightness
+        redLevel = savedGreenRedLevel
+        greenLevel = savedGreenGreenLevel
+        blueLevel = savedGreenBlueLevel
+    }
+
+    private func saveGreenSettings() {
+        savedGreenBrightness = brightness
+        savedGreenRedLevel = redLevel
+        savedGreenGreenLevel = greenLevel
+        savedGreenBlueLevel = blueLevel
+    }
+
+    private func restoreBlueSettings() {
+        brightness = savedBlueBrightness
+        redLevel = savedBlueRedLevel
+        greenLevel = savedBlueGreenLevel
+        blueLevel = savedBlueBlueLevel
+    }
+
+    private func saveBlueSettings() {
+        savedBlueBrightness = brightness
+        savedBlueRedLevel = redLevel
+        savedBlueGreenLevel = greenLevel
+        savedBlueBlueLevel = blueLevel
+    }
+
+    private func saveCurrentPresetSettings() {
+        switch preset {
+        case .full:
+            break
+        case .red:
+            saveRedSettings()
+        case .green:
+            saveGreenSettings()
+        case .blue:
+            saveBlueSettings()
+        case .custom:
+            saveCustomSettings()
+        }
     }
 
     private func startDaemon() {
