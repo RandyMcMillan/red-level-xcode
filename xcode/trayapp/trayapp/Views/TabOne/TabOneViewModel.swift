@@ -18,8 +18,17 @@ final class TabOneViewModel: ObservableObject {
     @Published private(set) var isApplyingPreset = false
     private var pendingApplyTask: Task<Void, Never>?
 
+    init() {
+        let settings = SettingsManager.shared
+        brightness = settings.displayBrightness
+        redLevel = settings.displayRedLevel
+        greenLevel = settings.displayGreenLevel
+        blueLevel = settings.displayBlueLevel
+    }
+
     func applyCurrentSettings() {
         cancelPendingApply()
+        saveDisplaySettings()
         performRustAction("Applied display settings") {
             applyDisplay(
                 brightness: UInt8(brightness),
@@ -95,6 +104,14 @@ final class TabOneViewModel: ObservableObject {
     private func cancelPendingApply() {
         pendingApplyTask?.cancel()
         pendingApplyTask = nil
+    }
+
+    private func saveDisplaySettings() {
+        let settings = SettingsManager.shared
+        settings.displayBrightness = brightness
+        settings.displayRedLevel = redLevel
+        settings.displayGreenLevel = greenLevel
+        settings.displayBlueLevel = blueLevel
     }
 
     private func performRustAction(_ successMessage: String, action: () -> Bool) {
