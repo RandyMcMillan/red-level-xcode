@@ -62,6 +62,7 @@ struct ContentView: View {
 
                 Section("Custom RGB levels")/* we want a simple reset button here in the ui*/ {
                     Slider(value: $redLevel, in: 0...100, step: 1)
+                        .tint(.red)
                     .onChange(of: redLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         saveCurrentPresetSettings()
@@ -70,6 +71,7 @@ struct ContentView: View {
                     //Text("Red \(Int(redLevel))%")
 
                     Slider(value: $greenLevel, in: 0...100, step: 1)
+                        .tint(.green)
                     .onChange(of: greenLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         saveCurrentPresetSettings()
@@ -78,6 +80,7 @@ struct ContentView: View {
                     //Text("Green \(Int(greenLevel))%")
 
                     Slider(value: $blueLevel, in: 0...100, step: 1)
+                        .tint(.blue)
                     .onChange(of: blueLevel) { _, _ in
                         guard !isApplyingPreset else { return }
                         saveCurrentPresetSettings()
