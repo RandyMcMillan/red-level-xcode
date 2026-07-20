@@ -35,9 +35,10 @@ struct EntryPointApp: App {
         }
         .menuBarExtraStyle(.window)
         .commands {
-            CommandMenu("About") {
-                Button("Info") {
+            CommandGroup(replacing: .appInfo) {
+                Button("About trayapp") {
                     appState.selectedTabIndex = 2
+                    NSApp.activate(ignoringOtherApps: true)
                 }
                 .keyboardShortcut("i", modifiers: [.command])
             }
