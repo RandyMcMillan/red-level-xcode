@@ -40,7 +40,7 @@ struct SettingsTabContent: View {
                     .textFieldStyle(.roundedBorder)
                     .help("Enter and save your username")
             }
-            .frame(maxWidth: 360, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
         }

@@ -44,64 +44,79 @@ struct TabOneContent: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Display") {
-                    Slider(value: $brightness, in: 1...100, step: 1)
-                        .tint(.gray)
-                        .onChange(of: brightness) { _, _ in
-                            guard !isApplyingPreset else { return }
-                            saveCurrentPresetSettings()
-                            applyCurrentSettings()
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Display")
+                            .font(.headline)
 
-                    Picker("Preset", selection: $preset) {
-                        ForEach(ChannelPreset.allCases) { preset in
-                            Text(preset.rawValue).tag(preset)
+                        Slider(value: $brightness, in: 1...100, step: 1)
+                            .tint(.gray)
+                            .frame(maxWidth: .infinity)
+                            .onChange(of: brightness) { _, _ in
+                                guard !isApplyingPreset else { return }
+                                saveCurrentPresetSettings()
+                                applyCurrentSettings()
+                            }
+
+                        Picker("Preset", selection: $preset) {
+                            ForEach(ChannelPreset.allCases) { preset in
+                                Text(preset.rawValue).tag(preset)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Channels")
+                            .font(.headline)
+
+                        Slider(value: $redLevel, in: 0...100, step: 1)
+                            .tint(.red)
+                            .frame(maxWidth: .infinity)
+                            .onChange(of: redLevel) { _, _ in
+                                guard !isApplyingPreset else { return }
+                                saveCurrentPresetSettings()
+                                applyCurrentSettings()
+                            }
+
+                        Slider(value: $greenLevel, in: 0...100, step: 1)
+                            .tint(.green)
+                            .frame(maxWidth: .infinity)
+                            .onChange(of: greenLevel) { _, _ in
+                                guard !isApplyingPreset else { return }
+                                saveCurrentPresetSettings()
+                                applyCurrentSettings()
+                            }
+
+                        Slider(value: $blueLevel, in: 0...100, step: 1)
+                            .tint(.blue)
+                            .frame(maxWidth: .infinity)
+                            .onChange(of: blueLevel) { _, _ in
+                                guard !isApplyingPreset else { return }
+                                saveCurrentPresetSettings()
+                                applyCurrentSettings()
+                            }
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Actions")
+                            .font(.headline)
+
+                        HStack {
+                            Text(statusMessage)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Reset") {
+                                resetButtonTapped()
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
                 }
-
-                Section("Channels") {
-                    Slider(value: $redLevel, in: 0...100, step: 1)
-                        .tint(.red)
-                        .onChange(of: redLevel) { _, _ in
-                            guard !isApplyingPreset else { return }
-                            saveCurrentPresetSettings()
-                            applyCurrentSettings()
-                        }
-
-                    Slider(value: $greenLevel, in: 0...100, step: 1)
-                        .tint(.green)
-                        .onChange(of: greenLevel) { _, _ in
-                            guard !isApplyingPreset else { return }
-                            saveCurrentPresetSettings()
-                            applyCurrentSettings()
-                        }
-
-                    Slider(value: $blueLevel, in: 0...100, step: 1)
-                        .tint(.blue)
-                        .onChange(of: blueLevel) { _, _ in
-                            guard !isApplyingPreset else { return }
-                            saveCurrentPresetSettings()
-                            applyCurrentSettings()
-                        }
-                }
-
-                Section("Actions") {
-                    HStack {
-                        Text(statusMessage)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                        Divider()
-                        Spacer()
-                        Button("Reset") {
-                            resetButtonTapped()
-                        }
-                    }
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
             }
-            .formStyle(.grouped)
         }
         .onAppear() {
             restoreCustomSettings()
