@@ -13,6 +13,7 @@ import SwiftUI
 class AppState: ObservableObject {
     static let shared = AppState() // Singleton for reusability
     @Published private(set) var latestConditionForAppIconColorMask: NSColor = .systemGray // Track the latest condition color
+    @Published var selectedTabIndex: Int = 0
 
     // Helper function to update the latestConditionColor based on the latest changed variable
     private func updateLatestConditionColor() {

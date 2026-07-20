@@ -20,16 +20,16 @@ import SwiftUI
 import ElegantTabs
 
 struct MainWindow: View {
-    @State private var selectedTab = 0
+    @ObservedObject private var appState = AppState.shared
     var body: some View {
-        ElegantTabsView(selection: $selectedTab) {
+        ElegantTabsView(selection: $appState.selectedTabIndex) {
             TabItem(title: "Display", icon: .system(name: "sun.max.fill")) {
                 TabOneContent()
             }
             TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
                 SettingsTabContent()
             }
-            TabItem(title: "About", icon: .system(name: "info")) {
+            TabItem(title: "Info", icon: .system(name: "info")) {
                 AboutTabContent()
             }
         }

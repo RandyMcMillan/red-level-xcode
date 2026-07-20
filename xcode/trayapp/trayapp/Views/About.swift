@@ -41,6 +41,7 @@ struct AboutTabContent: View {
                     NSApplication.shared.terminate(nil)
                 }
                 .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

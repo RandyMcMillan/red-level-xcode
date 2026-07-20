@@ -29,15 +29,48 @@ struct EntryPointApp: App {
     
     var body: some Scene {
         MenuBarExtra {
-            MenuBarContentView()
+            MenuBarContentView(appState: appState)
         } label: {
             MenuBarIcon(appState: appState)
         }
         .menuBarExtraStyle(.window)
+        .commands {
+            CommandMenu("About") {
+                Button("Info") {
+                    appState.selectedTabIndex = 2
+                }
+                .keyboardShortcut("i", modifiers: [.command])
+            }
+
+            CommandMenu("Navigation") {
+                Button("Display") {
+                    appState.selectedTabIndex = 0
+                }
+                .keyboardShortcut("1", modifiers: [.command])
+
+                Button("Settings") {
+                    appState.selectedTabIndex = 1
+                }
+                .keyboardShortcut("2", modifiers: [.command])
+
+                Button("About") {
+                    appState.selectedTabIndex = 2
+                }
+                .keyboardShortcut("3", modifiers: [.command])
+
+                Divider()
+
+                Button("Quit trayapp") {
+                    NSApplication.shared.terminate(nil)
+                }
+                .keyboardShortcut("q", modifiers: [.command])
+            }
+        }
     }
 }
 
 struct MenuBarContentView: View {
+    @ObservedObject var appState: AppState
     @State private var optionKeyPressed = false
 
     var body: some View {
@@ -131,4 +164,3 @@ public final class AppStateFixer {
 
 // Invoke early during execution layout:
 // AppStateFixer.repairSavedStateDirectory()
-
