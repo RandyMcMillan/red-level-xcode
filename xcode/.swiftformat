@@ -1,1 +1,3 @@
 --exclude swiftyapp/Lib/swiftyrustlib/Sources/RustyLib/RustyLib.swift
+--exclude Red-Level/Lib/swiftyrustlib/Sources/RustyLib/RustyLib.swift
+--exclude trayapp/Lib/swiftyrustlib/Sources/RustyLib/RustyLib.swift
