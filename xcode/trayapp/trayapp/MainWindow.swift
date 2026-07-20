@@ -33,6 +33,6 @@ struct MainWindow: View {
                 AboutTabContent()
             }
         }
-        .frame(minWidth: 0, idealWidth: 780, maxWidth: 880, minHeight: 0, idealHeight: 560, maxHeight: 720)
+        .frame(minWidth: 440, idealWidth: 440, maxWidth: 440, minHeight: 440, idealHeight: 440, maxHeight: 440)
     }
 }
