@@ -23,7 +23,7 @@ TRAYAPP_APP_PATH := $(SYMROOT)/$(CONFIGURATION)/$(TRAYAPP_APP_NAME)
 
 .DEFAULT_GOAL := help
 
-.PHONY: help rust resolve resolve-trayapp all app catalyst trayapp install install-trayapp install-all clean
+.PHONY: help rust resolve resolve-trayapp all app catalyst trayapp install install-red-level install-trayapp install-all clean
 
 help:
 	@printf '%s\n' \
@@ -34,6 +34,7 @@ help:
 		'make catalyst  - build the app for Mac Catalyst' \
 		'make trayapp   - build the tray app for macOS' \
 		'make install   - install the Mac Catalyst app into ~/Applications' \
+		'make install-red-level - install the Red-Level app into ~/Applications' \
 		'make install-trayapp - install the tray app into ~/Applications' \
 		'make install-all - install both apps into ~/Applications' \
 		'make clean     - clean Rust and Xcode build artifacts'
@@ -88,7 +89,8 @@ trayapp: rust resolve-trayapp
 		ONLY_ACTIVE_ARCH=YES \
 		build
 
-install: catalyst
+install: install-red-level
+install-red-level: catalyst
 	mkdir -p "$(INSTALL_DIR)"
 	rm -rf "$(INSTALL_DIR)/$(APP_NAME)"
 	cp -R "$(CATALYST_APP_PATH)" "$(INSTALL_DIR)/$(APP_NAME)"
@@ -98,7 +100,7 @@ install-trayapp: trayapp
 	rm -rf "$(INSTALL_DIR)/$(TRAYAPP_APP_NAME)"
 	cp -R "$(TRAYAPP_APP_PATH)" "$(INSTALL_DIR)/$(TRAYAPP_APP_NAME)"
 
-install-all: install install-trayapp
+install-all: install-red-level install-trayapp
 
 clean:
 	cd "$(RUST_CRATE_DIR)" && cargo clean
