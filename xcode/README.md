@@ -28,6 +28,7 @@ Demonstrates the ability to generate the necessary bindings for a rust lib compi
 - `make resolve` refreshes the local Swift package reference in Xcode.
 - `make app` builds the app for a generic iOS Simulator destination.
 - `make catalyst` builds the app for Mac Catalyst.
+- `make trayapp` builds the tray app for macOS.
 - `make clean` removes Rust and Xcode derived build artifacts.
 
 

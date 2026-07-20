@@ -18,10 +18,11 @@ if ! command -v rustup >/dev/null 2>&1; then
 fi
 
 MY_CRATE=rustylib
-SWIFT_APPS=("Red-Level" "swiftyapp")
+SWIFT_APPS=("Red-Level" "swiftyapp" "trayapp")
 SWIFT_PROJECT=swiftyrustlib
 SWIFT_PROJECT_NAME=RustyLib
 SWIFT_CORE_NAME=RustyCore
+SWIFT_PACKAGE_TEMPLATE_APP=swiftyapp
 
 cd $MY_CRATE
 
@@ -89,6 +90,11 @@ cd ../
 # step 3 - move to SwiftLib artifacts and sources
 for SWIFT_APP in "${SWIFT_APPS[@]}"; do
     SWIFT_LIB_PATH="./${SWIFT_APP}/Lib/${SWIFT_PROJECT}"
+    if [ ! -f "${SWIFT_LIB_PATH}/Package.swift" ]; then
+        mkdir -p "$(dirname "${SWIFT_LIB_PATH}")"
+        rm -rf "${SWIFT_LIB_PATH}"
+        cp -R "./${SWIFT_PACKAGE_TEMPLATE_APP}/Lib/${SWIFT_PROJECT}" "${SWIFT_LIB_PATH}"
+    fi
     SWIFT_ARTIFACTS_PATH="${SWIFT_LIB_PATH}/artifacts"
     SWIFT_SOURCES_PATH="${SWIFT_LIB_PATH}/Sources/${SWIFT_PROJECT_NAME}"
 
