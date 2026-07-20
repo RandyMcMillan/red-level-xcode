@@ -23,15 +23,16 @@ struct MainWindow: View {
     @State private var selectedTab = 0
     var body: some View {
         ElegantTabsView(selection: $selectedTab) {
-                  TabItem(title: "Display", icon: .system(name: "sun.max.fill")) {
-                      TabOneContent()
-                  }
-                  TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
-                      SettingsTabContent()
-                  }
-                  TabItem(title: "About", icon: .system(name: "info")) {
-                      AboutTabContent()
-                  }
-        }.frame(width: 800, height: 520)
+            TabItem(title: "Display", icon: .system(name: "sun.max.fill")) {
+                TabOneContent()
+            }
+            TabItem(title: "Settings", icon: .system(name: "gearshape.fill")) {
+                SettingsTabContent()
+            }
+            TabItem(title: "About", icon: .system(name: "info")) {
+                AboutTabContent()
+            }
+        }
+        .frame(minWidth: 720, idealWidth: 780, maxWidth: 880, minHeight: 500, idealHeight: 560, maxHeight: 720)
     }
 }

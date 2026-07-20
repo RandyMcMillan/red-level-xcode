@@ -23,23 +23,29 @@ struct SettingsTabContent: View {
     @StateObject private var vm = SettingsTabViewModel()
 
     var body: some View {
-        VStack(spacing: 20) {
-            // Launch-at-login toggle
-            LaunchAtLogin.Toggle()
-                .toggleStyle(.switch)
-                .help("Launch this app automatically when you log in")
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Preferences")
+                .font(.title3.weight(.semibold))
 
-            // App-logging toggle
-            Toggle("Enable Logging", isOn: $vm.appLoggingEnabled)
-                .toggleStyle(.switch)
-                .help("Turn application logging on or off")
+            VStack(alignment: .leading, spacing: 12) {
+                LaunchAtLogin.Toggle()
+                    .toggleStyle(.switch)
+                    .help("Launch this app automatically when you log in")
 
-            // Username text field
-            TextField("Username", text: $vm.username)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .help("Enter and save your username")
+                Toggle("Enable Logging", isOn: $vm.appLoggingEnabled)
+                    .toggleStyle(.switch)
+                    .help("Turn application logging on or off")
+
+                TextField("Username", text: $vm.username)
+                    .textFieldStyle(.roundedBorder)
+                    .help("Enter and save your username")
+            }
+            .frame(maxWidth: 360, alignment: .leading)
+
+            Spacer()
         }
-        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .padding(20)
     }
 }
 
@@ -50,4 +56,3 @@ struct SettingsTabContent_Previews: PreviewProvider {
     }
 }
 #endif
-

@@ -45,7 +45,7 @@ struct TabOneContent: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Brightness") {
+                Section("Display") {
                     Slider(value: $brightness, in: 1...100, step: 1)
                         .tint(.gray)
                         .onChange(of: brightness) { _, _ in
@@ -53,9 +53,7 @@ struct TabOneContent: View {
                             saveCurrentPresetSettings()
                             applyCurrentSettings()
                         }
-                }
 
-                Section("Channel preset") {
                     Picker("Preset", selection: $preset) {
                         ForEach(ChannelPreset.allCases) { preset in
                             Text(preset.rawValue).tag(preset)
@@ -64,7 +62,7 @@ struct TabOneContent: View {
                     .pickerStyle(.segmented)
                 }
 
-                Section("") {
+                Section("Channels") {
                     Slider(value: $redLevel, in: 0...100, step: 1)
                         .tint(.red)
                         .onChange(of: redLevel) { _, _ in
@@ -88,7 +86,9 @@ struct TabOneContent: View {
                             saveCurrentPresetSettings()
                             applyCurrentSettings()
                         }
+                }
 
+                Section("Actions") {
                     HStack {
                         Text(statusMessage)
                             .font(.footnote)
@@ -101,6 +101,7 @@ struct TabOneContent: View {
                     }
                 }
             }
+            .formStyle(.grouped)
         }
         .onAppear() {
             restoreCustomSettings()
