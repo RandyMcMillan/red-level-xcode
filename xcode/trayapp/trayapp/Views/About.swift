@@ -79,9 +79,6 @@ struct AboutTabContent: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Link("LICENSE", destination: URL(string: "https://github.com/RandyMcMillan/red-level-xcode/LICENSE")!)
-
-                        Text("License: MIT")
-                        Text("Author: Randy McMillan")
                     }
                     .font(.body)
 
